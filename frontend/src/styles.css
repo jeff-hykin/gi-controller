@@ -527,13 +527,12 @@ html.locked-viewport, html.locked-viewport body { touch-action: none; overscroll
 .gi-hud.mobile .gi-mic { width: 44px; }
 /* 16px: iOS zooms into a smaller field when it's focused */
 .gi-hud.mobile .gi-instruction { font-size: 16px; }
-/* Take control | Autodrive: the sticks in one, the prompt and mic in the other; in Autodrive the bottom is STOP alone */
-.gi-mode { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border-strong); }
-.app .gi-hud .gi-mode > .dim-btn { height: 44px; border: 0; border-radius: 0; background: transparent; color: var(--muted-fg); font-weight: 700;
-    display: inline-flex; align-items: center; justify-content: center; gap: 7px; touch-action: manipulation; }
-.app .gi-hud .gi-mode > .gi-mode-manual.on { background: var(--gi-you); color: #111; }
-.app .gi-hud .gi-mode > .gi-mode-auto.on { background: var(--gi); color: var(--primary-fg); }
-.gi-mode-auto.on .gi-led { background: currentColor; animation: gi-pulse 1.2s ease-in-out infinite; }
+/* phone: one button naming what a press does: Autodrive (the sticks are up) or Take control (GI drives, the prompt and
+   mic are up); in Autodrive the bottom is STOP alone */
+.app .gi-hud .gi-mode { height: 44px; width: 100%; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
+.app .gi-hud .dim-btn.gi-mode-auto, .app .gi-hud .dim-btn.gi-mode-auto:hover { background: var(--gi); color: var(--primary-fg); border-color: var(--gi); }
+.app .gi-hud .dim-btn.gi-mode-manual, .app .gi-hud .dim-btn.gi-mode-manual:hover { background: transparent; color: var(--gi-you); border-color: var(--gi-you); }
+.gi-mode-auto .gi-led { background: currentColor; }
 .app.mobile:has(.drive-hud.auto) { --drive-hud-h: 76px; }
 .drive-hud.mobile.auto { height: var(--drive-hud-h); grid-template-columns: 1fr min(40vw, 170px) 1fr; }
 .gi-hud.mobile.manual { padding: 4px; }
@@ -541,7 +540,7 @@ html.locked-viewport, html.locked-viewport body { touch-action: none; overscroll
     .app.mobile { --drive-hud-h: min(62vh, 260px); }
     .app.mobile:has(.drive-hud.auto) { --drive-hud-h: 76px; }
     .drive-hud.mobile.auto { height: auto; }
-    .app .gi-hud .gi-mode > .dim-btn { height: 36px; }
+    .app .gi-hud .gi-mode { height: 36px; }
     /* the sticks take most of the height and the camera sits top-center: GI takes the top-right corner beside it, one
        compact row so it ends above the stick zones */
     .gi-hud.mobile { bottom: auto; top: calc(52px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right)); left: auto;

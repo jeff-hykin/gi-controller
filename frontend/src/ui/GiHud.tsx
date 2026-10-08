@@ -78,19 +78,15 @@ export function GiHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
     const tone = state.on && takeover ? "you" : state.status
     const buttonLabel = state.on ? (state.status === "paused" && !takeover ? "Hand back" : "Autodrive on") : "Autodrive"
 
-    // phone: Take control | Autodrive picks what's on screen, the sticks (ui/DriveHud.tsx) or the prompt and mic
+    // phone: one button naming what a press does (Autodrive, or Take control while GI drives); it picks what's on
+    // screen, the sticks (ui/DriveHud.tsx) or the prompt and mic
     const auto = state.on
     const ended = state.status === "done" || state.status === "stuck" || state.status === "error"
     return (
         <div className={`gi-hud ${mobile ? `mobile ${auto ? "auto" : "manual"}` : "dim-panel glass"} tone-${tone}`} data-testid="gi-hud">
-            {mobile && (
-                <div className="gi-mode" role="radiogroup" aria-label="Who drives">
-                    <button type="button" role="radio" aria-checked={!auto} className={`dim-btn gi-mode-manual ${!auto ? "on" : ""}`} data-testid="take-control-button"
-                        onClick={() => auto && autodrive.end("off", "you took control")}>Take control</button>
-                    <button type="button" role="radio" aria-checked={auto} className={`dim-btn gi-mode-auto ${auto ? "on" : ""}`} data-testid="autodrive-button"
-                        onClick={() => autodrive.start()}><span className="gi-led" aria-hidden="true" />Autodrive</button>
-                </div>
-            )}
+            {mobile && (auto
+                ? <button type="button" className="dim-btn gi-mode gi-mode-manual" data-testid="take-control-button" onClick={() => autodrive.end("off", "you took control")}>Take control</button>
+                : <button type="button" className="dim-btn gi-mode gi-mode-auto" data-testid="autodrive-button" onClick={() => autodrive.start()}><span className="gi-led" aria-hidden="true" />Autodrive</button>)}
             {(!mobile || auto) && <div className="gi-row">
                 {!mobile && <button
                     type="button"
