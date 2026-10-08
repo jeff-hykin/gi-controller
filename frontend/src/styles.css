@@ -43,7 +43,8 @@ body.dark .scene-slot { background: radial-gradient(120% 90% at 50% 0%, color-mi
 .scene-tools .camera-info { max-width: 220px; }
 .scene-tools .dim-btn.icon.icon-button { width: 28px; height: 28px; }
 .scene-tools .scene-clouds.dim-btn.icon.icon-button { width: auto; }
-.mobile .scene-tools { bottom: auto; top: calc(62px + 28vw + env(safe-area-inset-top)); right: calc(52px + var(--dim-inset-right)); padding: 3px; }
+/* --cam-bottom: the phone camera panel's bottom (ui/CameraPanels.tsx), unset without one */
+.mobile .scene-tools { bottom: auto; top: calc(var(--cam-bottom, calc(52px + env(safe-area-inset-top))) + 8px); right: calc(52px + var(--dim-inset-right)); padding: 3px; }
 .mobile .scene-tools .camera-info { display: none; }
 .scene-off { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px;
     font: 12px var(--sans); color: var(--muted-fg); box-shadow: var(--shadow-md); }
@@ -67,7 +68,7 @@ body.dark .scene-slot { background: radial-gradient(120% 90% at 50% 0%, color-mi
 /* recenter / top-down, over the view's bottom-right corner (above the add-camera button) */
 .view-controls { position: absolute; right: 12px; bottom: calc(62px + var(--dim-inset-bottom)); z-index: 4; display: flex; flex-direction: column; gap: 6px; }
 .view-control { width: 36px; height: 36px; padding: 0; box-shadow: var(--shadow-md); background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(8px); }
-.mobile .view-controls { bottom: auto; top: calc(62px + 28vw + env(safe-area-inset-top)); right: 8px; }
+.mobile .view-controls { bottom: auto; top: calc(var(--cam-bottom, calc(52px + env(safe-area-inset-top))) + 8px); right: 8px; }
 /* the broken-TF note: one quiet line over the view's bottom-right corner, above recenter / top-down */
 .tf-footnote { position: absolute; right: calc(12px + var(--dim-inset-right)); bottom: calc(148px + var(--dim-inset-bottom)); z-index: 4; max-width: min(46vw, 440px);
     display: flex; align-items: center; gap: 5px; padding: 3px 8px; border: 0; border-radius: 6px; cursor: pointer; font: 500 11px/1.4 var(--sans); color: var(--warn);

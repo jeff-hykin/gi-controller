@@ -163,6 +163,7 @@ export function CameraPanels({ app, layout, mobile }: { app: ViewerApp; layout: 
                     index={index}
                     topics={topics}
                     isMain={main === panel.id}
+                    shown={panel.id === panels.find((other) => other.id !== main)?.id}
                     mobile={mobile}
                     onChange={(patch) => update(panel.id, patch)}
                     onClose={() => close(panel.id)}
@@ -180,12 +181,14 @@ export function CameraPanels({ app, layout, mobile }: { app: ViewerApp; layout: 
     )
 }
 
-function CameraPanel({ app, panel, index, topics, isMain, mobile, onChange, onClose, onMain }: {
+function CameraPanel({ app, panel, index, topics, isMain, shown, mobile, onChange, onClose, onMain }: {
     app: ViewerApp
     panel: PanelState
     index: number
     topics: Topic[]
     isMain: boolean
+    /** the floating panel a phone shows (it hides the rest) */
+    shown: boolean
     mobile: boolean
     onChange: (patch: Partial<PanelState>) => void
     onClose: () => void
@@ -357,6 +360,22 @@ function CameraPanel({ app, panel, index, topics, isMain, mobile, onChange, onCl
     }, [qualityOpen])
 
     const floating = !isMain
+    // on a phone the controls under the camera (view controls, scene tools) sit at its real bottom, which its aspect sets
+    useEffect(() => {
+        const node = element.current
+        if (!mobile || !floating || !shown || !node) {
+            return
+        }
+        const root = document.documentElement
+        const place = () => root.style.setProperty("--cam-bottom", `${Math.ceil(node.getBoundingClientRect().bottom)}px`)
+        const observer = new ResizeObserver(place)
+        observer.observe(node)
+        place()
+        return () => {
+            observer.disconnect()
+            root.style.removeProperty("--cam-bottom")
+        }
+    }, [mobile, floating, shown])
     const style: React.CSSProperties = floating && !mobile
         ? { width, height, ...(panel.x >= 0 ? { left: panel.x, top: panel.y } : { right: 12, top: 60 + index * (height + 12) }) }
         : mobile && floating && size.width && size.height
