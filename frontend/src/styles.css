@@ -482,3 +482,52 @@ html.locked-viewport, html.locked-viewport body { touch-action: none; overscroll
 .drive-halt .reconnect-button { margin-left: auto; font-weight: 700; color: #fff; background: #e5484d; border-color: #e5484d; }
 .drive-hud.mobile .drive-halt { flex-direction: column; gap: 6px; text-align: center; background: color-mix(in srgb, var(--card) 88%, transparent); padding: 6px; }
 .drive-hud.mobile .drive-halt .reconnect-button { margin-left: 0; width: 100%; height: 44px; touch-action: manipulation; }
+
+/* ── GI HUD (ui/GiHud.tsx): the Autodrive button, the instruction and mic, what GI is doing ── */
+.gi-hud { position: absolute; z-index: 8; display: flex; flex-direction: column; gap: 6px; --gi: var(--primary); --gi-you: #f5a524; }
+.gi-hud.dim-panel { left: 50%; bottom: 14px; transform: translateX(-50%); width: min(560px, calc(100vw - 2 * 380px)); min-width: 380px; padding: 8px 10px; }
+.desktop .side-panel ~ .gi-hud.dim-panel { left: calc(50% + 175px); }
+.gi-hud.tone-driving, .gi-hud.tone-thinking { border-color: var(--gi); box-shadow: 0 0 0 1px var(--gi), 0 6px 24px color-mix(in srgb, var(--gi) 25%, transparent); }
+.gi-hud.tone-you { border-color: var(--gi-you); box-shadow: 0 0 0 1px var(--gi-you); }
+.gi-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.gi-autodrive { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; font-weight: 700; white-space: nowrap; flex: none; touch-action: manipulation; }
+.gi-autodrive.on { background: var(--gi); color: var(--primary-fg); border-color: var(--gi); }
+.gi-hud.tone-you .gi-autodrive.on { background: var(--gi-you); border-color: var(--gi-you); color: #111; }
+.gi-led { width: 8px; height: 8px; border-radius: 50%; background: var(--muted-fg); flex: none; }
+.gi-autodrive.on .gi-led { background: currentColor; animation: gi-pulse 1.2s ease-in-out infinite; }
+@keyframes gi-pulse { 50% { opacity: 0.25; } }
+.gi-mic { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex: none; touch-action: none;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.gi-mic.on { background: #e5484d; border-color: #e5484d; color: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, #e5484d 30%, transparent); }
+.gi-mic.unavailable { opacity: 0.5; }
+.gi-instruction { flex: 1; min-width: 0; height: 34px; }
+.gi-status-row { font: 11px var(--mono); }
+.gi-status { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gi-hud.tone-you .gi-status { color: var(--gi-you); font-weight: 700; }
+.gi-hud.tone-error .gi-status, .gi-hud.tone-stuck .gi-status { color: var(--danger); }
+.gi-latency { flex: none; }
+.gi-sticks { display: inline-flex; gap: 4px; flex: none; }
+.gi-stick { width: 22px; height: 22px; }
+.gi-stick .ring { fill: none; stroke: var(--border-strong, var(--border)); stroke-width: 0.12; }
+.gi-stick .arm { stroke: var(--muted-fg); stroke-width: 0.1; }
+.gi-stick .dot { fill: var(--muted-fg); }
+.gi-stick .dot.live { fill: var(--gi); }
+.gi-thought { font: italic 11px var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* phone: a bar just above the thumb sticks (and the velocity note above them) */
+.app.mobile { --drive-hud-h: min(40vh, 330px); }
+.gi-hud.mobile { left: 8px; right: 8px; bottom: calc(var(--dim-inset-bottom) + env(safe-area-inset-bottom) + var(--drive-hud-h) + 30px); padding: 6px; gap: 4px;
+    border-radius: var(--radius); background: color-mix(in srgb, var(--card) 88%, transparent); border: 1px solid var(--border); backdrop-filter: blur(8px); }
+.gi-hud.mobile .gi-autodrive, .gi-hud.mobile .gi-mic, .gi-hud.mobile .gi-instruction { height: 44px; }
+.gi-hud.mobile .gi-mic { width: 44px; }
+/* 16px: iOS zooms into a smaller field when it's focused */
+.gi-hud.mobile .gi-instruction { font-size: 16px; }
+@media (orientation: landscape) and (max-height: 520px) {
+    .app.mobile { --drive-hud-h: min(62vh, 260px); }
+    /* the sticks take most of the height: GI sits at the top, under the top bar */
+    .gi-hud.mobile { bottom: auto; top: calc(52px + env(safe-area-inset-top)); left: 50%; right: auto; transform: translateX(-50%); width: min(560px, calc(100vw - 2 * 120px)); }
+    .gi-hud.mobile .gi-autodrive, .gi-hud.mobile .gi-mic, .gi-hud.mobile .gi-instruction { height: 38px; }
+    .gi-hud.mobile .gi-mic { width: 38px; }
+    .gi-hud.mobile .gi-thought { display: none; }
+}
+.gi-key-row { display: flex; gap: 4px; align-items: center; min-width: 0; } .gi-key-row .dim-input { flex: 1; min-width: 0; }

@@ -11,6 +11,8 @@ import { MapPanel } from "./ui/MapPanel.tsx"
 import { DriveHud } from "./ui/DriveHud.tsx"
 import { useDriveKeys } from "./ui/useDriveKeys.ts"
 import { useArmKeys } from "./ui/useArmKeys.ts"
+import { useGiKeys } from "./ui/useGiKeys.ts"
+import { GiHud } from "./ui/GiHud.tsx"
 import { ArmHud } from "./ui/ArmHud.tsx"
 import { useLockedViewport, useMobile } from "./ui/useMobile.ts"
 import { StatsOverlay } from "./ui/StatsOverlay.tsx"
@@ -57,6 +59,7 @@ export function App() {
     const profile = app && robot ? app.profile : null
     useDriveKeys(app?.drive ?? null, profile)
     useArmKeys(app?.arm ?? null, profile?.type === "arm" ? profile : null)
+    useGiKeys(app, !!profile && profile.type !== "arm")
 
     const view = useMemo(() => ({ mobile, mainCamera }), [mobile, mainCamera])
 
@@ -102,7 +105,7 @@ function FirstRun({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
     const isArm = useStore(app.robot).type === "arm"
     return (
         <>
-            {!onboarding.blocksDriving && (isArm ? <ArmHud app={app} mobile={mobile} /> : <DriveHud app={app} mobile={mobile} />)}
+            {!onboarding.blocksDriving && (isArm ? <ArmHud app={app} mobile={mobile} /> : <><GiHud app={app} mobile={mobile} /><DriveHud app={app} mobile={mobile} /></>)}
             {onboarding.message && <EmptyLayer {...onboarding.message} />}
         </>
     )

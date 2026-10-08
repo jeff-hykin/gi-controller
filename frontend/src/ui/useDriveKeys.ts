@@ -1,5 +1,6 @@
 // The keyboard as a drive source: the profile maps KeyboardEvent.code to axes or controls; Shift boosts, Space stops.
-// Keys drive whenever the page has focus (no arming), never while typing in a field. Escape, blur and hiding the page stop.
+// Keys drive whenever the page has focus (no arming), never while typing in a field. Escape and hiding the page stop
+// (autodrive too); losing focus only lets go of the held keys, so clicking elsewhere doesn't end a GI run.
 import { useEffect } from "react"
 import type { Drive } from "../core/drive.ts"
 import type { Axes, RobotProfile } from "../profile/types.ts"
@@ -64,19 +65,23 @@ export function useDriveKeys(drive: Drive | null, profile: RobotProfile | null) 
                 apply()
             }
         }
-        const reset = () => {
+        const release = () => {
             held.clear()
             drive.setBoost(false)
+            drive.setAxes("keys", {})
+        }
+        const reset = () => {
+            release()
             drive.stop()
         }
         addEventListener("keydown", down)
         addEventListener("keyup", up)
-        addEventListener("blur", reset)
+        addEventListener("blur", release)
         document.addEventListener("visibilitychange", reset)
         return () => {
             removeEventListener("keydown", down)
             removeEventListener("keyup", up)
-            removeEventListener("blur", reset)
+            removeEventListener("blur", release)
             document.removeEventListener("visibilitychange", reset)
         }
     }, [drive, profile])

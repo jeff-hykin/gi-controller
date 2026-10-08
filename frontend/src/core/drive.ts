@@ -37,6 +37,8 @@ export interface DriveState {
     error: string | null
     /** the last endpoint command (POST api/drive), shown until it ends */
     command: DriveCommand | null
+    /** a person is driving (a human source has a non-zero axis): autopilot sources are dropped */
+    takeover: boolean
     /** driving is held (link too slow, or lost) until a reconnect; nothing but the stop goes out */
     halt: DriveHalt | null
 }
@@ -66,8 +68,11 @@ export interface DriveEvent {
 
 const zeroAxes = (): Axes => ({ forward: 0, strafe: 0, turn: 0, vertical: 0 })
 
+/** Sources that drive on their own (GI's autodrive); every other source is a person, who always wins. */
+export const AUTOPILOT_SOURCES = new Set(["gi"])
+
 export class Drive {
-    readonly state = new Store<DriveState>({ armed: true, axes: zeroAxes(), boost: false, twist: { linear: [0, 0, 0], angular: [0, 0, 0] }, topics: [], topic: "", publishing: false, sent: 0, error: null, command: null, halt: null })
+    readonly state = new Store<DriveState>({ armed: true, axes: zeroAxes(), boost: false, twist: { linear: [0, 0, 0], angular: [0, 0, 0] }, topics: [], topic: "", publishing: false, sent: 0, error: null, command: null, halt: null, takeover: false })
     settings: Store<DriveSettings>
     readonly controlValues = new Store<Record<string, number>>({})
     /** axis contributions by source (keys, stick, pad), summed and clamped */
@@ -80,6 +85,7 @@ export class Drive {
     #commandTimer: ReturnType<typeof setTimeout> | undefined
     #controlPublishers = new Map<string, Publisher>()
     #unsubscribeSettings = () => {}
+    #stopListeners = new Set<() => void>()
     /** the running blueprints' modules (null = unknown), from Desktop's /dimos/ API */
     #blueprints: Record<string, Module[] | null> = {}
     /** Twist topics seen on the bridge (someone publishes them; maybe nobody reads them) */
@@ -201,10 +207,17 @@ export class Drive {
         }
     }
 
+    /** Called on every stop() (Space, the STOP button), e.g. so autodrive ends too. */
+    onStop(listener: () => void): () => void {
+        this.#stopListeners.add(listener)
+        return () => this.#stopListeners.delete(listener)
+    }
+
     /** Stop: every source released at once (space, the STOP button), and the agent's command too. */
     stop() {
         this.#sources.clear()
         this.#recompute()
+        this.#stopListeners.forEach((listener) => listener())
         const command = this.state.get().command
         if (command && !command.dryRun && typeof location !== "undefined") {
             this.state.update({ command: null })
@@ -213,6 +226,14 @@ export class Drive {
     }
 
     #recompute() {
+        // takeover: a person moving anything drops the autopilot's share in this same recompute, not at its next step
+        const takeover = [...this.#sources].some(([source, share]) => !AUTOPILOT_SOURCES.has(source) && Object.values(share).some((value) => Number.isFinite(value) && value !== 0))
+        if (takeover) {
+            AUTOPILOT_SOURCES.forEach((source) => this.#sources.delete(source))
+        }
+        if (takeover !== this.state.get().takeover) {
+            this.state.update({ takeover })
+        }
         const axes = zeroAxes()
         for (const share of this.#sources.values()) {
             for (const axis of Object.keys(axes) as Axis[]) {

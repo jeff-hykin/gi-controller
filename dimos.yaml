@@ -29,6 +29,7 @@ provides:
         - api/pages/*
         - api/captures/*
         - api/drive/*
+        - api/gi/*
         - api/recorder/*
         - api/settings/*
         - api/annotations/*
@@ -36,11 +37,12 @@ provides:
         - api/topics/*
         - api/events/*
     description: >-
-        Controller: drive the running robot (keyboard / sticks, velocity commands, stop) while watching its live 3D view
-        (point clouds, costmap, pose, planned path, TF) and cameras; recording to mcap, location labels, live 3D
-        annotations (boxes with labels every open page shows), and the view's settings (layers, styles, fixed frame,
-        follow). Coordinates are meters in the world frame, +z up. GET api/status is the overview; GET api/view what the
-        user sees.
+        GI Controller: let a General Intuition action model drive the robot from its camera (autodrive, GET api/gi),
+        with any key, stick or gamepad input taking over at once; drive the running robot (keyboard / sticks, velocity
+        commands, stop) while watching its live 3D view (point clouds, costmap, pose, planned path, TF) and cameras;
+        recording to mcap, location labels, live 3D annotations (boxes with labels every open page shows), and the
+        view's settings (layers, styles, fixed frame, follow). Coordinates are meters in the world frame, +z up. GET
+        api/status is the overview; GET api/view what the user sees.
     endpoints:
         -
             method: GET
@@ -62,8 +64,9 @@ provides:
             method: POST
             path: api/camera
             description: >-
-                Move the 3D camera in every open page: action=recenter (on the robot), topDown (straight down over the
-                robot), or lookAt (target [x, y, z], optional distance).
+                Move the 3D camera in every open page: action=recenter (follow the robot again, or reframe it if already
+                following), topDown (straight down over the robot), or lookAt (target [x, y, z], optional distance;
+                stops following).
             params:
                 action:
                     description: recenter | topDown | lookAt
@@ -84,13 +87,16 @@ provides:
             path: api/settings
             description: >-
                 Every page setting by key: gi.view {profile (the robot type picked: dog, humanoid, wheeled, arm, drone;
-                "" = auto), robot (the type in use, written by the page), fixedFrame ("" = auto), follow, showStats,
-                robotModel}; gi.arm {linear, angular, jointSpeed} (arm jog speeds); gi.rendering.v2 {pointStyle,
-                cubeShade}; gi.layers.enabled {<topic key>: on/off}; gi.layer.<type>.<topic key> (that layer's style:
-                colors, sizes, ...); gi.drive.<robot type> {linear, angular, vertical, topics: [] = auto, else the
-                output topics, one per entry, "/name" or "/name TwistStamped"}; gi.record.topics {<topic key>: record or
-                not (default on)}; gi.record.options {recordNew, compression, image_format, directory ("" = default),
-                logs, rates {<topic key>: max messages/s}}; gi.cameras (the camera panels).
+                "" = auto), robot (the type in use, written by the page), fixedFrame ("" = auto), follow, followFrame
+                (the TF frame the camera follows; "" = the robot's), showStats, robotModel}; gi.arm {linear, angular,
+                jointSpeed} (arm jog speeds); gi.rendering.v2 {pointStyle, cubeShade}; gi.layers.enabled {<topic key>:
+                on/off}; gi.layer.<type>.<topic key> (that layer's style: colors, sizes, ...); gi.drive.<robot type>
+                {linear, angular, vertical, topics: [] = auto, else the output topics, one per entry, "/name" or "/name
+                TwistStamped"}; gi.record.topics {<topic key>: record or not (default on)}; gi.record.options
+                {recordNew, compression, image_format, directory ("" = default), logs, rates {<topic key>: max
+                messages/s}}; gi.cameras (the camera panels); gi.autodrive {rateHz, maxSpeed (0..1, a share of the drive
+                speeds), autoResume, resumeMs, endpoint ("" = the mock policy), model} (GI autodrive; the API key is
+                never here).
         -
             method: PATCH
             path: api/settings
@@ -418,6 +424,14 @@ provides:
                 topic:
                     description: default as for api/drive
                     type: string
+        -
+            method: GET
+            path: api/gi
+            description: >-
+                GI autodrive: the GI endpoint in use ("" = the page's built-in mock policy), whether an API key is set
+                (never the key), and the gi.autodrive settings (rateHz, maxSpeed, autoResume, resumeMs, endpoint,
+                model). Autodrive itself runs in the page: GI sees the robot camera and drives with gamepad-style
+                actions; any key, stick or gamepad input takes over.
 nix:
     cache:
         aarch64-linux:

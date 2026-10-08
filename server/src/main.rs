@@ -10,6 +10,7 @@ mod desktop;
 mod dimos_app;
 mod drive;
 mod frontend;
+mod gi;
 mod image;
 mod labels;
 mod logs;
@@ -127,6 +128,7 @@ async fn main() -> Result<()> {
         annotations: annotations.clone(),
         settings,
         drive: Arc::default(),
+        gi: Arc::new(gi::Gi::load(app_data().map(|data| data.join("gi_key")))),
         desktop_url: Arc::new(dimos_app::field(|app| app.desktop_url.as_ref()).unwrap_or_default()),
     };
     let app = api::routes()

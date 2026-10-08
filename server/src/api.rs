@@ -15,12 +15,13 @@ use serde_json::{json, Value};
 
 use crate::annotations::{self, Annotations};
 use crate::drive::{self, Drive};
+use crate::gi::{self, Gi};
 use crate::labels;
 use crate::recorder;
 use crate::routes::Routes;
 use crate::settings::{self, Settings};
 
-pub const DESCRIPTION: &str = "Controller: drive the running robot (keyboard / sticks, velocity commands, stop) while watching its live 3D view \
+pub const DESCRIPTION: &str = "GI Controller: let a General Intuition action model drive the robot from its camera (autodrive, GET api/gi), with any key, stick or gamepad input taking over at once; drive the running robot (keyboard / sticks, velocity commands, stop) while watching its live 3D view \
 (point clouds, costmap, pose, planned path, TF) and cameras; recording to mcap, location labels, live 3D annotations (boxes with labels every \
 open page shows), and the view's settings (layers, styles, fixed frame, follow). Coordinates are meters in the world frame, +z up. GET \
 api/status is the overview; GET api/view what the user sees.";
@@ -31,6 +32,8 @@ pub struct Api {
     pub annotations: Arc<Annotations>,
     pub settings: Arc<Settings>,
     pub drive: Arc<Drive>,
+    /// GI: the key, and the client its steps go out with
+    pub gi: Arc<Gi>,
     /// Desktop's own HTTP API (DIMOS_APP's `desktopUrl`): the running dimos's log dirs
     pub desktop_url: Arc<String>,
 }
@@ -108,7 +111,7 @@ pub fn routes() -> Routes<Api> {
         .role("view")
         .endpoint("POST", "api/camera", "Move the 3D camera in every open page: action=recenter (follow the robot again, or reframe it if already following), topDown (straight down over the robot), or lookAt (target [x, y, z], optional distance; stops following).", json!({ "action": required(s("recenter | topDown | lookAt")), "target": vec3("lookAt: the point, world frame"), "distance": n("lookAt: meters from the target") }), camera)
         // settings: everything the page's panels change
-        .endpoint("GET", "api/settings", "Every page setting by key: gi.view {profile (the robot type picked: dog, humanoid, wheeled, arm, drone; \"\" = auto), robot (the type in use, written by the page), fixedFrame (\"\" = auto), follow, followFrame (the TF frame the camera follows; \"\" = the robot's), showStats, robotModel}; gi.arm {linear, angular, jointSpeed} (arm jog speeds); gi.rendering.v2 {pointStyle, cubeShade}; gi.layers.enabled {<topic key>: on/off}; gi.layer.<type>.<topic key> (that layer's style: colors, sizes, ...); gi.drive.<robot type> {linear, angular, vertical, topics: [] = auto, else the output topics, one per entry, \"/name\" or \"/name TwistStamped\"}; gi.record.topics {<topic key>: record or not (default on)}; gi.record.options {recordNew, compression, image_format, directory (\"\" = default), logs, rates {<topic key>: max messages/s}}; gi.cameras (the camera panels).", json!({}), get_settings)
+        .endpoint("GET", "api/settings", "Every page setting by key: gi.view {profile (the robot type picked: dog, humanoid, wheeled, arm, drone; \"\" = auto), robot (the type in use, written by the page), fixedFrame (\"\" = auto), follow, followFrame (the TF frame the camera follows; \"\" = the robot's), showStats, robotModel}; gi.arm {linear, angular, jointSpeed} (arm jog speeds); gi.rendering.v2 {pointStyle, cubeShade}; gi.layers.enabled {<topic key>: on/off}; gi.layer.<type>.<topic key> (that layer's style: colors, sizes, ...); gi.drive.<robot type> {linear, angular, vertical, topics: [] = auto, else the output topics, one per entry, \"/name\" or \"/name TwistStamped\"}; gi.record.topics {<topic key>: record or not (default on)}; gi.record.options {recordNew, compression, image_format, directory (\"\" = default), logs, rates {<topic key>: max messages/s}}; gi.cameras (the camera panels); gi.autodrive {rateHz, maxSpeed (0..1, a share of the drive speeds), autoResume, resumeMs, endpoint (\"\" = the mock policy), model} (GI autodrive; the API key is never here).", json!({}), get_settings)
         .endpoint("PATCH", "api/settings", "Change a page setting (merged into the key's object; a null field is removed); every open page applies it at once. E.g. {key: \"gi.layers.enabled\", value: {\"dimos/lidar/sensor_msgs.PointCloud2\": false}} hides a layer; {key: \"gi.view\", value: {follow: false}}. Keys: see GET api/settings.", json!({ "key": required(s("e.g. gi.view, gi.layers.enabled, gi.layer.pointcloud.<topic key>")), "value": required(json!({ "type": "object", "description": "the fields to set" })) }), patch_settings)
         // recording
         .endpoint("GET", "api/recorder", "The recorder: whether it's recording (messages, bytes, dropped, skipped by a max rate, seconds, path), the keys and log dirs being recorded, the files in the recordings folder, the folder (and the default one, and Desktop's shared recordings folder) and its options (gi.record.options).", json!({}), recorder::status)
@@ -134,6 +137,10 @@ pub fn routes() -> Routes<Api> {
         .endpoint("POST", "api/drive/arm", "No-op, kept for older callers: driving needs no arming (always armed). Use api/drive/stop to stop.", json!({ "armed": b("ignored"), "source": s("ignored") }), arm)
         .endpoint("POST", "api/drive", "Drive the robot: publish a Twist (linear [x, y, z] m/s, angular [x, y, z] rad/s, each within ±5) at 10 Hz for seconds (default 1, at most 10), then a second of zeros. No arming needed. topic: default the drive panel's, else the cmd_vel on the bus. dryRun=true only says what it would send. A new command or a stop replaces a running one; every open page shows it.", json!({ "linear": vec3("m/s, robot frame (x forward, y left)"), "angular": vec3("rad/s (z = turn left)"), "seconds": n("default 1, at most 10"), "topic": s("e.g. /cmd_vel"), "dryRun": b("send nothing, say what would be sent"), "source": s("who is driving, shown on the page (default agent)") }), drive_robot)
         .endpoint("POST", "api/drive/stop", "Stop driving: cancels a running drive command and sends a second of zeros.", json!({ "topic": s("default as for api/drive"), "dryRun": b("") }), stop_robot)
+        // GI: the page's policy steps go through here, so the key stays in the backend
+        .endpoint("GET", "api/gi", "GI autodrive: the GI endpoint in use (\"\" = the page's built-in mock policy), whether an API key is set (never the key), and the gi.autodrive settings (rateHz, maxSpeed, autoResume, resumeMs, endpoint, model). Autodrive itself runs in the page: GI sees the robot camera and drives with gamepad-style actions; any key, stick or gamepad input takes over.", json!({}), gi::config)
+        .plumbing("PUT", "api/gi/key", gi::put_key)
+        .plumbing("POST", "api/gi/step", gi::step)
         // the page's plumbing: its event socket, its reports, its answers to the backend's capture requests
         .plumbing("POST", "api/pages/{page}", annotations::report_page)
         .plumbing("POST", "api/pages/{page}/close", annotations::close_page)
@@ -312,6 +319,7 @@ impl Api {
             annotations,
             settings: Arc::new(Settings::load(None)),
             drive: Arc::default(),
+            gi: Arc::default(),
             desktop_url: Arc::new(String::new()),
         }
     }

@@ -8,6 +8,7 @@ import { ArmPanel } from "./ArmPanel.tsx"
 import { Field, Toggle } from "./controls.tsx"
 import { maxLatencyOf } from "../core/linkWatch.ts"
 import { DrivePanel } from "./DrivePanel.tsx"
+import { GiSettings } from "./GiSettings.tsx"
 import { rendering } from "../core/render/rendering.ts"
 import { StylePicker } from "./StylePicker.tsx"
 import { followFrameOptions } from "../core/map2d.ts"
@@ -51,6 +52,11 @@ export function SettingsPanel({ app }: { app: ViewerApp }) {
                     </section>
                 )
                 : (
+                    <>
+                    <section className="settings-section" data-section="gi">
+                        <h3 className="dim-label">GI</h3>
+                        <GiSettings app={app} />
+                    </section>
                     <section className="settings-section" data-section="drive">
                         <h3 className="dim-label">Drive</h3>
                         <DrivePanel app={app} />
@@ -58,6 +64,7 @@ export function SettingsPanel({ app }: { app: ViewerApp }) {
                             <MaxLatencyInput app={app} />
                         </Field>
                     </section>
+                    </>
                 )}
             <h3 className="dim-label">Rendering</h3>
             <div className="field-block">

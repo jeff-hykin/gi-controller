@@ -13,6 +13,9 @@ import { VideoSources } from "./video.ts"
 import { Drive } from "./drive.ts"
 import { ArmControl } from "./arm.ts"
 import { AgentLink } from "./agent.ts"
+import { Autodrive, type AutodriveSettings, DEFAULT_AUTODRIVE } from "./gi/autodrive.ts"
+import { CameraFrames } from "./gi/frames.ts"
+import { Speech } from "./gi/speech.ts"
 import { LocationLabels } from "./labels.ts"
 import { robotPose } from "./robot.ts"
 import { disposeModel, robotModel } from "./render/robotModel.ts"
@@ -57,6 +60,8 @@ export class ViewerApp {
     readonly arm: ArmControl
     /** live annotations and the agent's captures (server/src/annotations.rs) */
     readonly agent: AgentLink
+    /** GI: its settings, the autodrive loop, the camera frames it sees, push-to-talk */
+    readonly gi: { settings: Store<AutodriveSettings>; autodrive: Autodrive; frames: CameraFrames; speech: Speech }
     /** right-click location labels (server/src/labels.rs) */
     readonly labels: LocationLabels
     /** what's running (Desktop's /dimos/runs, live on its zenoh events): the first-run messages and the drive topic */
@@ -96,6 +101,9 @@ export class ViewerApp {
         this.connection.start()
         this.labels = new LocationLabels(this)
         this.agent = new AgentLink(this)
+        const giSettings = persistentStore<AutodriveSettings>("gi.autodrive", DEFAULT_AUTODRIVE)
+        const frames = new CameraFrames(this)
+        this.gi = { settings: giSettings, autodrive: new Autodrive(this.drive, frames, giSettings), frames, speech: new Speech() }
         this.runs.state.subscribe(() => {
             this.#updateDriveCandidates()
             this.#updateRobot()
