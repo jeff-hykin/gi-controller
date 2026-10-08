@@ -1,5 +1,5 @@
 {
-    "name": "dim-controller",
+    "name": "gi-controller",
     "private": true,
     "type": "module",
     "scripts": {

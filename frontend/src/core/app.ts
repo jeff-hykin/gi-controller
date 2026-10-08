@@ -48,7 +48,7 @@ export class ViewerApp {
     readonly highlight: FrameHighlight
     readonly video: VideoSources
     readonly layers: LayerManager
-    readonly settings = persistentStore<ViewSettings>("lv.view", { profile: "", fixedFrame: "", follow: true, followFrame: "", showStats: false, robotModel: true, maxLatencyMs: DEFAULT_MAX_LATENCY_MS })
+    readonly settings = persistentStore<ViewSettings>("gi.view", { profile: "", fixedFrame: "", follow: true, followFrame: "", showStats: false, robotModel: true, maxLatencyMs: DEFAULT_MAX_LATENCY_MS })
     #profile: RobotProfile
     /** the robot type in use, whether it was picked or auto, and why */
     readonly robot: Store<{ type: RobotType; auto: boolean; reason: string }>

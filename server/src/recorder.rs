@@ -1,10 +1,10 @@
 //! The recorder and its zenoh side (routes in api.rs). A start names its keys, or leaves them out: then the topics on
 //! the bus now are found here (liveliness tokens and a short listen, as Desktop's /api/topics does) minus rpc topics and
-//! the ones unticked in the recorder panel (the `lv.record.topics` setting), and while it runs, new ones join (unless
-//! `lv.record.options.recordNew` is off) and dimos runs that start later bring their log dirs (Desktop's /dimos/runs).
+//! the ones unticked in the recorder panel (the `gi.record.topics` setting), and while it runs, new ones join (unless
+//! `gi.record.options.recordNew` is off) and dimos runs that start later bring their log dirs (Desktop's /dimos/runs).
 //! While a recording runs this process subscribes to exactly the recorded keys, so an idle recorder costs no bandwidth;
 //! the stream meter (`GET api/recorder/streams`, each key's bytes/s) listens to everything only while someone asks.
-//! The recorder's options (format, compression, folder, logs, per-stream max rates) are the `lv.record.options`
+//! The recorder's options (format, compression, folder, logs, per-stream max rates) are the `gi.record.options`
 //! setting (`Options`), so they survive a restart and every page shows the same ones.
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -29,7 +29,7 @@ use crate::record::{self, Compression, Recorder};
 use crate::settings::Settings as Store;
 
 /// The setting key the recorder's options live under.
-pub const OPTIONS_KEY: &str = "lv.record.options";
+pub const OPTIONS_KEY: &str = "gi.record.options";
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug, Default)]
 pub struct Settings {
@@ -37,7 +37,7 @@ pub struct Settings {
     pub image_format: ImageFormat,
 }
 
-/// The recorder's options, read leniently from `lv.record.options`: a field that's missing or not understood takes
+/// The recorder's options, read leniently from `gi.record.options`: a field that's missing or not understood takes
 /// its default rather than throwing the rest away.
 #[derive(Clone, Serialize, Debug, PartialEq)]
 pub struct Options {
@@ -630,7 +630,7 @@ pub async fn start(
     let keys = match explicit {
         Some(keys) => keys,
         None => match state.discover().await {
-            Ok(keys) => wanted(&keys, &api.settings.get("lv.record.topics")),
+            Ok(keys) => wanted(&keys, &api.settings.get("gi.record.topics")),
             Err(problem) => return error(StatusCode::SERVICE_UNAVAILABLE, problem),
         },
     };
@@ -670,7 +670,7 @@ fn follow_recording(api: crate::api::Api, path: Option<String>, topics: bool, lo
                 if let Ok(keys) = api.recorder.discover().await {
                     let _ = api
                         .recorder
-                        .add(wanted(&keys, &api.settings.get("lv.record.topics")))
+                        .add(wanted(&keys, &api.settings.get("gi.record.topics")))
                         .await;
                 }
             }
@@ -794,7 +794,7 @@ pub async fn streams(Extract(state): Extract<Arc<State>>) -> Response {
     match state.streams().await {
         Ok((streams, seconds)) => {
             let options = state.options();
-            let chosen = state.settings.get("lv.record.topics");
+            let chosen = state.settings.get("gi.record.topics");
             let list: Vec<Value> = streams
                 .into_iter()
                 .filter_map(|(key, bytes, messages)| {
@@ -1150,7 +1150,7 @@ mod tests {
         assert_eq!(wanted(&keys, &Value::Null), keys);
     }
 
-    /// The options are the lv.record.options setting: saved, reported, validated, and only the file's format and folder
+    /// The options are the gi.record.options setting: saved, reported, validated, and only the file's format and folder
     /// are held still while recording.
     #[tokio::test]
     async fn options_are_saved_and_the_folder_waits_for_the_recording_to_end() {

@@ -4,7 +4,7 @@ import { persistentStore, Store } from "../store.ts"
 import type { CubeShade, PointStyle } from "./pointMaterial.ts"
 
 // v2: the default moved from glow to cubes, and a stored "glow" from before that shouldn't hide the new default
-export const rendering = persistentStore<{ pointStyle: PointStyle; cubeShade: CubeShade }>("lv.rendering.v2", { pointStyle: "voxel", cubeShade: "soft" })
+export const rendering = persistentStore<{ pointStyle: PointStyle; cubeShade: CubeShade }>("gi.rendering.v2", { pointStyle: "voxel", cubeShade: "soft" })
 
 /** Set while splats are being drawn as cubes because frames took longer than FRAME_BUDGET_MS for a while. */
 export const splatFallback = new Store<{ active: boolean; frameMs: number }>({ active: false, frameMs: 0 })

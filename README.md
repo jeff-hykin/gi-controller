@@ -24,7 +24,7 @@ continuous driving from the keys and sticks, which publishes through the gateway
 
 **Renamed from dim-live-viewer.** GitHub redirects the old URL. An install under the new name starts from the old
 install's settings (`settings.json` is copied from `~/.dimos/data/apps/dim-live-viewer/`), and recordings keep going to
-Desktop's `live-viewer` recordings folder if it exists (else `controller`). Setting keys keep their `lv.` prefix.
+Desktop's `live-viewer` recordings folder if it exists (else `controller`). Setting keys keep their `gi.` prefix.
 
 ## What it shows
 
@@ -119,9 +119,9 @@ Auto ([core/robotType.ts](frontend/src/core/robotType.ts)), first match wins:
 5. dog.
 
 Running blueprints come before Desktop's default robot so a remembered Go2 doesn't turn a running arm sim into a dog.
-The hint under the picker says which rule decided. The page writes the type in use to `lv.view.robot` (the pick is
-`lv.view.profile`, `""` = auto), and drive settings are per type (`lv.drive.dog`, …; an install from before types
-starts from its old profile's, e.g. `lv.drive.Unitree Go2`).
+The hint under the picker says which rule decided. The page writes the type in use to `gi.view.robot` (the pick is
+`gi.view.profile`, `""` = auto), and drive settings are per type (`gi.drive.dog`, …; an install from before types
+starts from its old profile's, e.g. `gi.drive.Unitree Go2`).
 
 ## Driving
 
@@ -187,7 +187,7 @@ five biggest streams by live bandwidth (measured by the backend, `GET api/record
 it out, and **See recordings**, which opens the Recordings app (or offers to install it). **Advanced** has the image
 format (raw, png / jpeg xl lossless, webp, jpeg), mcap chunk compression, whether new streams join, whether dimos's logs
 go in, and every stream with its rate, a switch and a max rate (messages per second; the rest are skipped). The options
-are saved in the backend (`lv.record.options`, `lv.record.topics`; `PUT api/recorder/settings`). Known types are
+are saved in the backend (`gi.record.options`, `gi.record.topics`; `PUT api/recorder/settings`). Known types are
 written as ROS 2 CDR so Foxglove opens the file; anything else is kept as raw LCM bytes with its type name.
 
 The running dimos's own logs go into the same file. When recording starts the backend asks Desktop where they are

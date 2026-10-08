@@ -34,8 +34,8 @@ pub struct Args {
     /// the built page (vite's dist); the nix wrapper sets it
     #[arg(long, env = "CONTROLLER_FRONTEND")]
     frontend: Option<PathBuf>,
-    /// where recordings go [default: Desktop's shared folder (DIMOS_APP's recordingsDir)/controller (or its live-viewer
-    /// folder, if this app made one before it was renamed), else DIMOS_APP's dataDir/recordings]
+    /// where recordings go [default: Desktop's shared folder (DIMOS_APP's recordingsDir)/gi-controller, else DIMOS_APP's
+    /// dataDir/recordings]
     #[arg(long, env = "CONTROLLER_RECORD_DIR")]
     record_dir: Option<PathBuf>,
     /// print the endpoints (agent.json) and exit: scripts/check_endpoints.ts compares them with dimos.yaml
@@ -43,37 +43,21 @@ pub struct Args {
     agent_json: bool,
 }
 
-/// The app's name before it was renamed: its data dir and recordings folder are still used (see `default_record_dir`,
-/// `settings_file`), so nothing a user made is lost.
-const OLD_APP_NAME: &str = "dim-live-viewer";
-
 /// Where recordings go when nobody says: Desktop's shared recordings folder (where other apps find them), else the
-/// app's data dir, never the app's own (git) checkout. A `live-viewer` folder from before the rename stays in use.
+/// app's data dir, never the app's own (git) checkout.
 fn default_record_dir() -> PathBuf {
     if let Some(dir) = dimos_app::field(|app| app.recordings_dir.as_ref()) {
-        let old = PathBuf::from(&dir).join("live-viewer");
-        return if old.is_dir() {
-            old
-        } else {
-            PathBuf::from(dir).join("controller")
-        };
+        return PathBuf::from(dir).join("gi-controller");
     }
     if let Some(data) = app_data() {
-        let old = data
-            .parent()
-            .map(|apps| apps.join(OLD_APP_NAME).join("recordings"))
-            .filter(|old| old.is_dir());
-        return match old {
-            Some(old) if !data.join("recordings").is_dir() => old,
-            _ => data.join("recordings"),
-        };
+        return data.join("recordings");
     }
     let home = std::env::var("DIMOS_HOME")
         .map(PathBuf::from)
         .unwrap_or_else(|_| {
             PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| ".".into())).join(".dimos")
         });
-    let app = dimos_app::field(|app| app.name.as_ref()).unwrap_or_else(|| "dim-controller".into());
+    let app = dimos_app::field(|app| app.name.as_ref()).unwrap_or_else(|| "gi-controller".into());
     home.join("data").join(app).join("recordings")
 }
 
@@ -81,21 +65,9 @@ fn app_data() -> Option<PathBuf> {
     dimos_app::field(|app| app.data_dir.as_ref()).map(PathBuf::from)
 }
 
-/// `settings.json` in the app's data dir. Installed under its new name, the app starts from the settings it had under
-/// the old one (a copy: the old install, if still there, keeps its own).
+/// `settings.json` in the app's data dir.
 fn settings_file() -> Option<PathBuf> {
-    let data = app_data()?;
-    let file = data.join("settings.json");
-    let old = data
-        .parent()
-        .map(|apps| apps.join(OLD_APP_NAME).join("settings.json"));
-    if let Some(old) = old.filter(|old| !file.exists() && old.is_file() && *old != file) {
-        let _ = std::fs::create_dir_all(&data);
-        if std::fs::copy(&old, &file).is_ok() {
-            eprintln!("controller: settings carried over from {}", old.display());
-        }
-    }
-    Some(file)
+    app_data().map(|data| data.join("settings.json"))
 }
 
 /// The page itself is always revalidated: it names the hashed assets of its build, and the nix store's 1970 mtimes

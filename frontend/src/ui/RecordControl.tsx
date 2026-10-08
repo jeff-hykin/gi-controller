@@ -1,7 +1,7 @@
 // Recording, floating at the top left of the view (a panel opens below it): a red Record button (while recording: "Stop recording", its time, size and stream count) and "…", which opens
 // the options: the folder, the biggest streams by live bandwidth (each can be left out), See recordings, and an
 // Advanced section (image format, chunk compression, new topics, dimos logs, every stream with its rate and a max
-// rate). Every topic is recorded unless turned off; the options are saved in the backend (lv.record.options).
+// rate). Every topic is recorded unless turned off; the options are saved in the backend (gi.record.options).
 import { useEffect, useRef, useState } from "react"
 import type { ViewerApp } from "../core/app.ts"
 import { persistentStore, useStore } from "../core/store.ts"
@@ -13,7 +13,7 @@ import { Icon } from "./icons.tsx"
 import { appInstalled, openApp, underDesktop } from "../dim-app/source/desktop.js"
 
 /** topic key → recorded or not; a topic not in it is recorded (so new ones are too) */
-export const recordedTopics = persistentStore<Record<string, boolean>>("lv.record.topics", {})
+export const recordedTopics = persistentStore<Record<string, boolean>>("gi.record.topics", {})
 export function RecordControl({ app }: { app: ViewerApp }) {
     const status = useStore(recorder.status)
     const pending = useStore(recorder.pending)

@@ -6,7 +6,7 @@
 // There is no arming (since 2026-10-05): `armed` is always true. The backend's `drive` events carry the agent's commands
 // (and dry runs) for the HUD.
 import { encode } from "./lcm/lcm.ts"
-import { loadedSetting, persistentStore, Store } from "./store.ts"
+import { persistentStore, Store } from "./store.ts"
 import { type Connection, dimosKey, Priority, type Publisher } from "./transport.ts"
 import { autoTopics, type DriveTopic, type Module, parseTopics, TWIST, TWIST_STAMPED, zenohKey } from "./cmdvel.ts"
 import { type Axes, type Axis, defaultTwist, type RobotProfile, type Twist } from "../profile/types.ts"
@@ -19,8 +19,6 @@ export interface DriveSettings {
     vertical: number
     /** the output topics, one per line ("/my_cmd_vel", or "/my_cmd_vel TwistStamped"); [] = auto (core/cmdvel.ts) */
     topics: string[]
-    /** before 2026-10-05: one topic ("" = auto); read once into `topics` */
-    topic?: string
 }
 
 export interface DriveState {
@@ -66,9 +64,6 @@ export interface DriveEvent {
     command: DriveCommand | null
 }
 
-/** The drive settings' key before robot types (2026-10-05), by the profile that replaced it. */
-const LEGACY_DRIVE_KEYS: Partial<Record<RobotProfile["type"], string>> = { dog: "lv.drive.Unitree Go2", wheeled: "lv.drive.Galaxea R1 Pro", drone: "lv.drive.Drone" }
-
 const zeroAxes = (): Axes => ({ forward: 0, strafe: 0, turn: 0, vertical: 0 })
 
 export class Drive {
@@ -96,19 +91,10 @@ export class Drive {
         this.#useProfile(profile)
     }
 
-    /** lv.drive.<type> (an install from before robot types starts from its profile's, e.g. lv.drive.Unitree Go2). */
+    /** gi.drive.<type> */
     #settingsFor(profile: RobotProfile): Store<DriveSettings> {
-        const key = `lv.drive.${profile.type}`
-        const legacy = LEGACY_DRIVE_KEYS[profile.type]
         const { speeds } = profile.drive
-        const defaults: DriveSettings = { linear: speeds.linear, angular: speeds.angular, vertical: speeds.vertical, topics: [] }
-        const earlier = !loadedSetting(key) && legacy ? loadedSetting(legacy) : undefined
-        const settings = persistentStore<DriveSettings>(key, { ...defaults, ...(earlier ?? {}) })
-        const old = settings.get().topic
-        if (old && !settings.get().topics?.length) {
-            settings.update({ topics: [old], topic: "" })
-        }
-        return settings
+        return persistentStore<DriveSettings>(`gi.drive.${profile.type}`, { linear: speeds.linear, angular: speeds.angular, vertical: speeds.vertical, topics: [] })
     }
 
     #useProfile(profile: RobotProfile) {

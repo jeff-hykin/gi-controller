@@ -60,7 +60,7 @@ Deno.test("each cloud keeps its own preset, per viewer, and Balanced is the defa
     setCloudQuality(lidar.key, "low")
     setCloudQuality(globalMap.key, "full")
     assertEquals([cloudQualityOf(lidar.key), cloudQualityOf(globalMap.key)], ["low", "full"])
-    assertEquals(JSON.parse(localStorage.getItem("lv.clouds.quality")!), { [lidar.key]: "low", [globalMap.key]: "full" })
+    assertEquals(JSON.parse(localStorage.getItem("gi.clouds.quality")!), { [lidar.key]: "low", [globalMap.key]: "full" })
     assertEquals(cloudPreset("nonsense").id, "balanced")
     // fewer points and scans as the preset goes down
     const [low, balanced, full] = CLOUD_PRESETS

@@ -13,7 +13,7 @@ const REPLAY_HINT = "No robot? Turn on replay in the Launcher to drive a recorde
 /** A lost connection is usually Desktop restarting or a network blip that heals by itself: warn only past this. */
 const LOST_WARN_AFTER_MS = 8000
 /** "No blueprint running" dismissed for this tab's session (a lidar alone, say): cleared once a blueprint runs. */
-const NO_BLUEPRINT_DISMISSED = "lv.onboard.noBlueprintDismissed"
+const NO_BLUEPRINT_DISMISSED = "gi.onboard.noBlueprintDismissed"
 const readFlag = () => {
     try {
         return sessionStorage.getItem(NO_BLUEPRINT_DISMISSED) === "1"

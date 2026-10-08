@@ -15,7 +15,7 @@ export interface RecordingStatus {
 export type ImageFormat = "raw" | "jpeg" | "png" | "webp" | "jpegxl"
 export type Compression = "none" | "lz4" | "zstd"
 
-/** The recorder's saved options (the lv.record.options setting, server/src/recorder.rs `Options`). */
+/** The recorder's saved options (the gi.record.options setting, server/src/recorder.rs `Options`). */
 export interface RecorderOptions {
     recordNew: boolean
     compression: Compression

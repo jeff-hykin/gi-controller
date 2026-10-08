@@ -58,7 +58,7 @@ const RENAMED: Record<string, VideoQuality> = { auto: "balanced", smooth: "laten
 export const presetFor = (id: string | undefined): QualityPreset =>
     QUALITY_PRESETS.find((preset) => preset.id === (RENAMED[id ?? ""] ?? id)) ?? QUALITY_PRESETS[1]
 
-const QUALITY_KEY = "lv.video.quality"
+const QUALITY_KEY = "gi.video.quality"
 
 /** This viewer's preset for a topic key (Balanced when unset, or storage is unavailable). */
 export function loadQuality(topicKey: string): VideoQuality {

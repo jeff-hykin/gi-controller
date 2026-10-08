@@ -19,7 +19,7 @@ import { ScenePanel } from "./ui/ScenePanel.tsx"
 import { EmptyLayer, useOnboarding } from "./ui/Onboarding.tsx"
 
 const noRobot = new Store({ type: "dog" as const, auto: true, reason: "" })
-const cameraLayout = persistentStore<CameraLayout>("lv.cameras", { panels: [], main: null })
+const cameraLayout = persistentStore<CameraLayout>("gi.cameras", { panels: [], main: null })
 
 declare global {
     interface Window {

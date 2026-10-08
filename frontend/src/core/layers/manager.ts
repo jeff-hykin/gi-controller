@@ -17,7 +17,7 @@ export interface LayerEntry {
     settings: Store<object>
 }
 
-const ENABLED_KEY = "lv.layers.enabled"
+const ENABLED_KEY = "gi.layers.enabled"
 
 export class LayerManager {
     readonly entries = new Store<{ list: LayerEntry[] }>({ list: [] })
@@ -28,7 +28,7 @@ export class LayerManager {
 
     constructor(readonly viewer: Viewer, readonly tf: TfTree, readonly connection: Connection, readonly video: VideoSources, public profile: RobotProfile) {
         connection.status.subscribe(() => this.#sync(connection.status.get().topics))
-        // turned on or off elsewhere (another viewer, the agent: PATCH api/settings lv.layers.enabled)
+        // turned on or off elsewhere (another viewer, the agent: PATCH api/settings gi.layers.enabled)
         this.#enabled.subscribe(() => {
             for (const entry of this.entries.get().list) {
                 const wanted = this.#enabled.get()[entry.topic.key]
@@ -56,7 +56,7 @@ export class LayerManager {
             const saved = this.#enabled.get()[topic.key]
             const enabled = saved ?? (type.enabledByDefault?.(topic) ?? true)
             const defaults = typeof type.defaults === "function" ? type.defaults(topic) : structuredClone(type.defaults)
-            const settings = persistentStore(`lv.layer.${type.id}.${topic.key}`, defaults)
+            const settings = persistentStore(`gi.layer.${type.id}.${topic.key}`, defaults)
             added.push({ topic, type, enabled, status: {}, settings })
         }
         if (!added.length) {

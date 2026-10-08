@@ -1,5 +1,5 @@
 // The arm's first pick, once per browser.
-const SEEN = "lv.arm.shading"
+const SEEN = "gi.arm.shading"
 const KEY = [100, 105, 109, 48, 115]
 
 export function armShading() {

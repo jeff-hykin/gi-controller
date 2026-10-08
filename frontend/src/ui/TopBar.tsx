@@ -24,7 +24,7 @@ export function TopBar({ app, tab, onTab }: { app: ViewerApp; tab: Tab | null; o
             {!inDesktopShell() && (
                 <>
                     <img className="brand" src="./icon.svg" alt="" />
-                    <span className="title dim-title">Controller</span>
+                    <span className="title dim-title">GI Controller</span>
                 </>
             )}
             <span className={`dim-badge dim-mono conn-pill ${live ? "ok" : connection.state === "degraded" ? "warn" : ""}`} title={connection.error ?? ""}>

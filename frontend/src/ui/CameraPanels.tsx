@@ -459,12 +459,12 @@ function clampWidth(width: number, aspect: number) {
 }
 
 /** panel id → width this viewer dragged it to (per viewer: a phone and a desktop don't share it) */
-const SIZE_KEY = "lv.cameras.width"
+const SIZE_KEY = "gi.cameras.width"
 const loadPanelWidth = (id: number): number | null => readLocal<Record<string, number>>(SIZE_KEY, {})[id] ?? null
 const savePanelWidth = (id: number, width: number) => writeLocal(SIZE_KEY, { ...readLocal<Record<string, number>>(SIZE_KEY, {}), [id]: width })
 
 /** panel id → fullscreen fills the screen (cropped) instead of fitting the picture; per viewer, like the width */
-const FILL_KEY = "lv.cameras.fill"
+const FILL_KEY = "gi.cameras.fill"
 const loadPanelFill = (id: number): boolean => readLocal<Record<string, boolean>>(FILL_KEY, {})[id] === true
 const savePanelFill = (id: number, fill: boolean) => writeLocal(FILL_KEY, { ...readLocal<Record<string, boolean>>(FILL_KEY, {}), [id]: fill })
 

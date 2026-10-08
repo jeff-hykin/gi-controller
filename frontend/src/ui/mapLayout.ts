@@ -22,7 +22,7 @@ export interface MapLayout {
     view: MapView | null
 }
 
-export const LAYOUT_KEY = "lv.map2d"
+export const LAYOUT_KEY = "gi.map2d"
 export const HEAD_PX = 33
 export const MIN_WIDTH = 200, MIN_HEIGHT = 150
 export const viewport = () => ({ width: globalThis.innerWidth || 0, height: globalThis.innerHeight || 0 })

@@ -31,7 +31,7 @@ export interface ResolvedType {
     reason: string
 }
 
-/** A saved lv.view.profile → the chosen type, or null for auto. A profile name from before robot types (e.g. "Unitree
+/** A saved gi.view.profile → the chosen type, or null for auto. A profile name from before robot types (e.g. "Unitree
  * Go2") counts as auto: the page saved its default with every view setting, so it says nothing about a choice. */
 export function chosenType(saved: string | undefined | null): RobotType | null {
     return saved && (ROBOT_TYPES as readonly string[]).includes(saved) ? saved as RobotType : null

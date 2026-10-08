@@ -43,7 +43,7 @@ export function cloudChanges(to: CloudPreset): Record<string, unknown> {
     return { maxHz: to.maxHz, minQuality: to.minQuality ?? null, encodeOptions: { quality: to.quality } }
 }
 
-const QUALITY_KEY = "lv.clouds.quality"
+const QUALITY_KEY = "gi.clouds.quality"
 
 /** topic key → this viewer's preset (missing = Balanced) */
 export const cloudQualities = new Store<Record<string, CloudQuality>>(readLocal<Record<string, CloudQuality>>(QUALITY_KEY, {}))
@@ -148,7 +148,7 @@ export const formatCount = (count: number) =>
 export const formatBytes = (bytes: number) =>
     bytes >= 1e6 ? `${(bytes / 1e6).toFixed(1)} MB` : bytes >= 1000 ? `${Math.round(bytes / 1000)} kB` : `${Math.round(bytes)} B`
 
-const PANEL_KEY = "lv.scene"
+const PANEL_KEY = "gi.scene"
 
 /** The 3D view's panel, per viewer: off (nothing subscribed), and where the picture-in-picture sits (-1: its corner). */
 export interface ScenePanelState {

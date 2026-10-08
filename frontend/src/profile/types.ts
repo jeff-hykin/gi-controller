@@ -77,7 +77,7 @@ export interface ArmProfile {
 }
 
 export interface RobotProfile {
-    /** which kind of robot: the key the Robot picker and settings use (lv.view.profile, lv.drive.<type>) */
+    /** which kind of robot: the key the Robot picker and settings use (gi.view.profile, gi.drive.<type>) */
     type: RobotType
     /** shown in the Robot picker */
     name: string

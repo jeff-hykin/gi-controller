@@ -1,6 +1,6 @@
 //! The page's settings, held here (not in the browser) so the agent can read and change them and every open page
-//! follows: a JSON object per key (`lv.view`, `lv.rendering.v2`, `lv.layers.enabled`, `lv.layer.<type>.<topic key>`,
-//! `lv.drive.<profile>`, `lv.record.topics`, `lv.record.options` (recorder.rs `Options`), `lv.cameras`). Saved to `settings.json` in the
+//! follows: a JSON object per key (`gi.view`, `gi.rendering.v2`, `gi.layers.enabled`, `gi.layer.<type>.<topic key>`,
+//! `gi.drive.<profile>`, `gi.record.topics`, `gi.record.options` (recorder.rs `Options`), `gi.cameras`). Saved to `settings.json` in the
 //! app's data dir; a change is a `{type: "settings", key, value}` event on the page event stream.
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -13,7 +13,7 @@ pub struct Settings {
 }
 
 pub fn valid_key(key: &str) -> bool {
-    key.starts_with("lv.") && key.len() <= 200 && !key.contains(['?', '#'])
+    key.starts_with("gi.") && key.len() <= 200 && !key.contains(['?', '#'])
 }
 
 impl Settings {
@@ -91,21 +91,21 @@ mod tests {
         let _ = std::fs::remove_file(&file);
         let settings = Settings::load(Some(file.clone()));
         settings.merge(
-            "lv.view",
+            "gi.view",
             json!({ "follow": false, "showStats": true })
                 .as_object()
                 .unwrap(),
         );
         let value = settings.merge(
-            "lv.view",
+            "gi.view",
             json!({ "showStats": null, "fixedFrame": "map" })
                 .as_object()
                 .unwrap(),
         );
         assert_eq!(value, json!({ "follow": false, "fixedFrame": "map" }));
-        assert_eq!(Settings::load(Some(file.clone())).get("lv.view"), value);
+        assert_eq!(Settings::load(Some(file.clone())).get("gi.view"), value);
         assert!(valid_key(
-            "lv.layer.pointcloud.dimos/lidar/sensor_msgs.PointCloud2"
+            "gi.layer.pointcloud.dimos/lidar/sensor_msgs.PointCloud2"
         ));
         assert!(!valid_key("other"));
         let _ = std::fs::remove_file(&file);

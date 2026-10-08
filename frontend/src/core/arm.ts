@@ -104,7 +104,7 @@ export class ArmControl {
     #bridge: string[] = []
 
     constructor(readonly connection: Connection, readonly drive: Drive, public profile: ArmProfile) {
-        this.settings = persistentStore<ArmSettings>("lv.arm", { linear: profile.linear, angular: profile.angular, jointSpeed: profile.jointSpeed })
+        this.settings = persistentStore<ArmSettings>("gi.arm", { linear: profile.linear, angular: profile.angular, jointSpeed: profile.jointSpeed })
         this.#timer = setInterval(() => this.#tick(), 1000 / TICK_HZ)
         let armed = drive.state.get().armed
         drive.state.subscribe(() => {
