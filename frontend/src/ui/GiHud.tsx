@@ -133,7 +133,7 @@ export function GiHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
             </div>
             <div className="gi-row gi-status-row">
                 <span className={`gi-status`} data-testid="gi-status" role="status">{note ?? talk.error ?? status}</span>
-                {state.on && state.latencyMs !== null && <span className="gi-latency dim" data-testid="gi-latency">{state.latencyMs} ms</span>}
+                {state.on && state.latencyMs !== null && <span className="gi-latency dim" data-testid="gi-latency">{state.latencyMs < 1 ? "<1" : state.latencyMs} ms</span>}
                 <span className="gi-sticks" aria-label="GI's sticks">
                     <StickView stick={state.on && !takeover ? state.action?.leftStick ?? null : null} label="left" />
                     <StickView stick={state.on && !takeover ? state.action?.rightStick ?? null : null} label="right" />

@@ -491,14 +491,15 @@ html.locked-viewport, html.locked-viewport body { touch-action: none; overscroll
 .gi-hud.tone-you { border-color: var(--gi-you); box-shadow: 0 0 0 1px var(--gi-you); }
 .gi-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .gi-autodrive { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; font-weight: 700; white-space: nowrap; flex: none; touch-action: manipulation; }
-.gi-autodrive.on { background: var(--gi); color: var(--primary-fg); border-color: var(--gi); }
-.gi-hud.tone-you .gi-autodrive.on { background: var(--gi-you); border-color: var(--gi-you); color: #111; }
+/* .app .gi-hud: dim-app's .dim-btn would otherwise win and leave dark text on the fill */
+.app .gi-hud .gi-autodrive.on { background: var(--gi); color: var(--primary-fg); border-color: var(--gi); }
+.app .gi-hud.tone-you .gi-autodrive.on { background: var(--gi-you); border-color: var(--gi-you); color: #111; }
 .gi-led { width: 8px; height: 8px; border-radius: 50%; background: var(--muted-fg); flex: none; }
 .gi-autodrive.on .gi-led { background: currentColor; animation: gi-pulse 1.2s ease-in-out infinite; }
 @keyframes gi-pulse { 50% { opacity: 0.25; } }
 .gi-mic { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex: none; touch-action: none;
     user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.gi-mic.on { background: #e5484d; border-color: #e5484d; color: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, #e5484d 30%, transparent); }
+.app .gi-hud .gi-mic.on { background: #e5484d; border-color: #e5484d; color: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, #e5484d 30%, transparent); }
 .gi-mic.unavailable { opacity: 0.5; }
 .gi-instruction { flex: 1; min-width: 0; height: 34px; }
 .gi-status-row { font: 11px var(--mono); }
