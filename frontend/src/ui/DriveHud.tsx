@@ -23,6 +23,7 @@ function HaltNotice({ app, halt }: { app: ViewerApp; halt: DriveHalt }) {
 export function DriveHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
     const drive = app.drive
     const state = useStore(drive.state)
+    const autodrive = useStore(app.gi.autodrive.state)
     const keys = app.profile.drive.keys
     const usesVertical = Object.values(keys).some((action) => "axis" in action && action.axis === "vertical")
     const usesStrafe = Object.values(keys).some((action) => "axis" in action && action.axis === "strafe")
@@ -33,14 +34,16 @@ export function DriveHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
 
     if (mobile) {
         const moving = state.publishing && [...state.twist.linear, ...state.twist.angular].some((value) => value !== 0)
+        // the sticks only in Take control (ui/GiHud.tsx); in Autodrive the bar is STOP alone
+        const auto = autodrive.on
         return (
-            <div className={`drive-hud mobile ${moving ? "moving" : ""}`} data-testid="drive-hud-mobile">
-                <Joystick
+            <div className={`drive-hud mobile ${moving ? "moving" : ""} ${auto ? "auto" : ""}`} data-testid="drive-hud-mobile">
+                {auto ? <span /> : <Joystick
                     side="left"
                     label={usesStrafe ? "move" : "forward / back"}
                     axes={usesStrafe ? "xy" : "y"}
                     onMove={(x, y) => drive.setAxes("left-stick", { forward: y, strafe: usesStrafe ? -x : 0 })}
-                />
+                />}
                 <div className="hud-center">
                     {state.halt && <HaltNotice app={app} halt={state.halt} />}
                     <span className="dim-badge hud-note" data-testid="drive-readout">
@@ -62,14 +65,14 @@ export function DriveHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
                     >
                         STOP
                     </button>
-                    <button type="button" className={`dim-btn boost-button ${state.boost ? "on" : ""}`} aria-pressed={state.boost} onClick={() => drive.setBoost(!state.boost)}>{state.boost ? "FAST ON" : "FAST"}</button>
+                    {!auto && <button type="button" className={`dim-btn boost-button ${state.boost ? "on" : ""}`} aria-pressed={state.boost} onClick={() => drive.setBoost(!state.boost)}>{state.boost ? "FAST ON" : "FAST"}</button>}
                 </div>
-                <Joystick
+                {auto ? <span /> : <Joystick
                     side="right"
                     label={usesVertical ? "turn · up / down" : "turn"}
                     axes={usesVertical ? "xy" : "x"}
                     onMove={(x, y) => drive.setAxes("right-stick", { turn: -x, vertical: usesVertical ? y : 0 })}
-                />
+                />}
             </div>
         )
     }

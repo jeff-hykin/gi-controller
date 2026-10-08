@@ -78,10 +78,21 @@ export function GiHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
     const tone = state.on && takeover ? "you" : state.status
     const buttonLabel = state.on ? (state.status === "paused" && !takeover ? "Hand back" : "Autodrive on") : "Autodrive"
 
+    // phone: Take control | Autodrive picks what's on screen, the sticks (ui/DriveHud.tsx) or the prompt and mic
+    const auto = state.on
+    const ended = state.status === "done" || state.status === "stuck" || state.status === "error"
     return (
-        <div className={`gi-hud ${mobile ? "mobile" : "dim-panel glass"} tone-${tone}`} data-testid="gi-hud">
-            <div className="gi-row">
-                <button
+        <div className={`gi-hud ${mobile ? `mobile ${auto ? "auto" : "manual"}` : "dim-panel glass"} tone-${tone}`} data-testid="gi-hud">
+            {mobile && (
+                <div className="gi-mode" role="radiogroup" aria-label="Who drives">
+                    <button type="button" role="radio" aria-checked={!auto} className={`dim-btn gi-mode-manual ${!auto ? "on" : ""}`} data-testid="take-control-button"
+                        onClick={() => auto && autodrive.end("off", "you took control")}>Take control</button>
+                    <button type="button" role="radio" aria-checked={auto} className={`dim-btn gi-mode-auto ${auto ? "on" : ""}`} data-testid="autodrive-button"
+                        onClick={() => autodrive.start()}><span className="gi-led" aria-hidden="true" />Autodrive</button>
+                </div>
+            )}
+            {(!mobile || auto) && <div className="gi-row">
+                {!mobile && <button
                     type="button"
                     className={`dim-btn gi-autodrive ${state.on ? "on" : ""}`}
                     data-testid="autodrive-button"
@@ -91,7 +102,7 @@ export function GiHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
                 >
                     <span className="gi-led" aria-hidden="true" />
                     {buttonLabel}
-                </button>
+                </button>}
                 <button
                     type="button"
                     className={`dim-btn gi-mic ${talking ? "on" : ""} ${talk.unavailable ? "unavailable" : ""}`}
@@ -130,15 +141,15 @@ export function GiHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
                         }
                     }}
                 />
-            </div>
-            <div className="gi-row gi-status-row">
+            </div>}
+            {(!mobile || auto || ended) && <div className="gi-row gi-status-row">
                 <span className={`gi-status`} data-testid="gi-status" role="status">{note ?? talk.error ?? status}</span>
                 {state.on && state.latencyMs !== null && <span className="gi-latency dim" data-testid="gi-latency">{state.latencyMs < 1 ? "<1" : state.latencyMs} ms</span>}
                 <span className="gi-sticks" aria-label="GI's sticks">
                     <StickView stick={state.on && !takeover ? state.action?.leftStick ?? null : null} label="left" />
                     <StickView stick={state.on && !takeover ? state.action?.rightStick ?? null : null} label="right" />
                 </span>
-            </div>
+            </div>}
             {state.thought && state.on && !takeover && <div className="gi-thought dim" data-testid="gi-thought">“{state.thought}”</div>}
         </div>
     )
