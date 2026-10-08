@@ -3,6 +3,7 @@
 import { assert, assertAlmostEquals, assertEquals, assertRejects, assertThrows } from "jsr:@std/assert@1"
 import { Drive } from "../src/core/drive.ts"
 import go2 from "../src/profile/dog.ts"
+import drone from "../src/profile/drone.ts"
 import type { Connection } from "../src/core/transport.ts"
 import { applyDeadzone, gamepadAxes, sticksToAxes } from "../src/core/gamepad.ts"
 import { HttpGi, mockStep, parseStepResult } from "../src/core/gi/policy.ts"
@@ -191,6 +192,17 @@ Deno.test("autodrive ends on a policy error, on STOP, and on a halted link", asy
         assertEquals(autodrive.state.get().status, "error")
         dispose()
     }
+})
+
+Deno.test("switching the robot type ends autodrive", async () => {
+    const { policy } = scriptedPolicy(() => forward)
+    const { drive, autodrive, dispose } = setup(policy)
+    autodrive.start()
+    await until(() => autodrive.state.get().status === "driving")
+    drive.setProfile(drone)
+    assertEquals(autodrive.state.get().on, false)
+    assertEquals(drive.state.get().axes.forward, 0)
+    dispose()
 })
 
 Deno.test("takeover pauses autodrive (no steps while the person drives) and it hands back after the idle", async () => {

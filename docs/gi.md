@@ -41,7 +41,8 @@ in one place (`frontend/src/core/gi/policy.ts` and `server/src/gi.rs`).
 }
 ```
 
-`audio` is optional (the raw push-to-talk clip, for a model that listens itself), and `t` is seconds since the run
+`audio` is optional (the raw push-to-talk clip, for a model that listens itself; this app doesn't send it yet, since
+speech recognition and a recorder fight over the mic in some browsers), and `t` is seconds since the run
 started. The answer:
 
 ```json
@@ -65,7 +66,7 @@ apart from the settings file, so `GET api/settings` and the agent never see it.
 
 | scenario | feature |
 | --- | --- |
-| 1 say where to go | mic button (push-to-talk; hold T on a desktop): browser speech recognition, interim words shown live; a text field for typing; Autodrive button |
+| 1 say where to go | mic button (push-to-talk; hold T on a desktop): browser speech recognition, interim words shown live; a text field for typing; Autodrive button (G, or a gamepad's A) |
 | 2 grab it | takeover inside the drive loop: any human source (keys, on-screen sticks, a physical gamepad) with a non-zero axis drops the policy's share in the same recompute that applies the human input |
 | 3 hand it back | resume after an idle (default 2 s) with auto-resume on; with it off, the Autodrive button resumes |
 | 4 see what it does | GI HUD: status, instruction, step latency, thought, the policy's two sticks drawn live |

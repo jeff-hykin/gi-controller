@@ -117,6 +117,8 @@ export class Drive {
         }
         this.#sources.clear()
         this.#recompute()
+        // autodrive ends too: GI was driving another kind of robot
+        this.#stopListeners.forEach((listener) => listener())
         this.#closeAll()
         this.#controlPublishers.forEach((publisher) => publisher.close())
         this.#controlPublishers.clear()

@@ -1,16 +1,23 @@
-# dim-controller
+# GI Controller
 
-A [dimOS Desktop](https://github.com/dimensionalOS/dimos-desktop) app for driving a running dimOS robot while watching
-it: a low-latency 3D view placed by TF (point clouds, costmap, pose, planned path), live cameras, driving (keyboard, or
-sticks on a phone, with a deadman), jogging a robot arm (joints, end effector, gripper) and an mcap recorder. It is the one canonical controller: it replaces
-web_ctrl, the Live Viewer (its old name), `dimos-controller` and `dim-app-minimal-kb-control` (Teleop), and is meant to
-be **forked per robot** (see [Fork this for your robot](#fork-this-for-your-robot)).
+Let a General Intuition (GI) action model drive a dimOS robot from its camera, with a
+person always one keypress away from taking over. A fork of [dim-controller](https://github.com/jeff-hykin/dim-controller)
+(the 3D view, cameras, manual driving and recording below are its); what the fork adds is in [docs/gi.md](docs/gi.md):
+
+- **Autodrive** (button, or G; a gamepad's A): GI steps on the robot camera's latest frame and drives with gamepad-style
+  sticks, scaled by a max autodrive speed. Its status, step latency, "thought" and two sticks show live.
+- **Takeover**: any key, on-screen stick or gamepad input drops GI's output in the same instant ("You're driving"); it
+  hands back 2 s after you let go, or waits for the button with auto-resume off. STOP / Space ends autodrive.
+- **Voice**: hold the mic (or T) and say what to do; the words become the instruction and autodrive starts. Or type it.
+- **No GI account needed to try it**: with no endpoint set, a built-in mock policy obeys forward / back / turn left /
+  right / spin / explore / stop ("for N seconds" too). With one (Settings → GI), steps go through this app's backend,
+  which adds the API key so no page ever sees it.
 
 ```sh
-dimos-desktop install https://github.com/jeff-hykin/dim-controller
+dimos-desktop install /path/to/gi-controller      # a local clone; there's no published repo yet
 ```
 
-Then open **Controller** from the rail while a blueprint (sim, replay or robot) runs on zenoh. Topics appear as they
+Then open **GI Controller** from the rail while a blueprint (sim, replay or robot) runs on zenoh. Topics appear as they
 start flowing; nothing is configured by topic name.
 
 Every action is an HTTP endpoint the page itself uses, and Desktop's agent calls the same ones: arming, driving,
@@ -21,10 +28,6 @@ check-endpoints [--write]`, checked in CI). Settings live in the backend (`GET` 
 app's data dir), so a change from the agent or another window shows up in every open page. The one exception is
 continuous driving from the keys and sticks, which publishes through the gateway at 20 Hz with the gateway's deadman;
 `POST api/drive` is the endpoint way to drive (a Twist for up to 10 s, then zeros; `dryRun` sends nothing).
-
-**Renamed from dim-live-viewer.** GitHub redirects the old URL. An install under the new name starts from the old
-install's settings (`settings.json` is copied from `~/.dimos/data/apps/dim-live-viewer/`), and recordings keep going to
-Desktop's `live-viewer` recordings folder if it exists (else `controller`). Setting keys keep their `gi.` prefix.
 
 ## What it shows
 
