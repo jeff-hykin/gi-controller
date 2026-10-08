@@ -427,12 +427,13 @@ html.locked-viewport, html.locked-viewport body { touch-action: none; overscroll
 /* landscape phone: the camera sits top-center between the sticks; recenter / top-down move left, under Record */
 @media (orientation: landscape) and (max-height: 520px) {
     .mobile .camera-panel.floating { right: auto; left: 50%; transform: translateX(-50%); --cam-w: min(30vw, 260px); }
-    /* beside the Map control (left, top 98px), not on it; below it is the left stick zone */
-    .mobile .view-controls { top: calc(98px + env(safe-area-inset-top)); right: auto; left: calc(146px + var(--dim-inset-left)); flex-direction: row; }
+    /* Record and Map fill the left column (8-132px) and the left stick zone starts at ~148px: the view controls and the
+       scene tools take the next column, one beside Record and one beside Map, short of the centered camera */
+    .mobile .view-controls { top: calc(52px + env(safe-area-inset-top)); right: auto; left: calc(140px + var(--dim-inset-left)); flex-direction: row; }
     .mobile .tf-footnote { top: calc(100px + env(safe-area-inset-top)); right: calc(8px + var(--dim-inset-right)); max-width: 30vw; }
     /* with the camera main, the 3D picture-in-picture takes the same spot between the sticks */
     .mobile.camera-main .scene-slot { top: calc(52px + env(safe-area-inset-top)); bottom: auto; right: auto; left: 50%; transform: translateX(-50%); width: min(30vw, 260px); height: min(18vw, 156px); }
-    .mobile .scene-tools { top: calc(100px + env(safe-area-inset-top)); right: auto; left: calc(96px + var(--dim-inset-left)); }
+    .mobile .scene-tools { top: calc(98px + env(safe-area-inset-top)); right: auto; left: calc(140px + var(--dim-inset-left)); }
 }
 /* every image topic on the bus, one tab each (core/cameraChoice.ts cameraTabs); scrolls sideways when they don't fit */
 .camera-tabs { position: relative; display: flex; gap: 2px; flex: 1 1 auto; min-width: 0; align-self: stretch; margin: -4px 0 -4px -6px; padding: 0 0 0 6px;
