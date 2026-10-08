@@ -34,7 +34,7 @@ export function DriveHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
 
     if (mobile) {
         const moving = state.publishing && [...state.twist.linear, ...state.twist.angular].some((value) => value !== 0)
-        // the sticks only in Take control (ui/GiHud.tsx); in Autodrive the bar is STOP alone
+        // the sticks, STOP and FAST only in Take control; in Autodrive, GI's Take control button is the STOP (ui/GiHud.tsx)
         const auto = autodrive.on
         return (
             <div className={`drive-hud mobile ${moving ? "moving" : ""} ${auto ? "auto" : ""}`} data-testid="drive-hud-mobile">
@@ -49,7 +49,7 @@ export function DriveHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
                     <span className="dim-badge hud-note" data-testid="drive-readout">
                         {command ? `${command.dryRun ? "dry run" : command.source} · ${velocity(command.linear, command.angular)}` : velocity(state.twist.linear, state.twist.angular)}
                     </span>
-                    <button
+                    {!auto && <button
                         type="button"
                         className="dim-btn stop-button"
                         data-testid="stop-button"
@@ -64,7 +64,7 @@ export function DriveHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
                         }}
                     >
                         STOP
-                    </button>
+                    </button>}
                     {!auto && <button type="button" className={`dim-btn boost-button ${state.boost ? "on" : ""}`} aria-pressed={state.boost} onClick={() => drive.setBoost(!state.boost)}>{state.boost ? "FAST ON" : "FAST"}</button>}
                 </div>
                 {auto ? <span /> : <Joystick

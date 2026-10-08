@@ -1,11 +1,12 @@
 // GI on screen: the Autodrive button, the instruction (typed, or spoken with the hold-to-talk mic), and what GI is doing
 // (status, step latency, its thought, its two sticks drawn live). Desktop: a bar at the bottom center. Phone: a bar
 // above the thumb sticks. Hold T to talk and G to toggle autodrive on a desktop (ui/useGiKeys.ts).
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { ViewerApp } from "../core/app.ts"
 import { useStore } from "../core/store.ts"
 import type { AutodriveState } from "../core/gi/autodrive.ts"
 import type { Stick } from "../core/gamepad.ts"
+import { releaseAllSticks } from "./Joystick.tsx"
 
 /** What the status chip says; takeover reads "You're driving" whatever the reason text. */
 export function statusText(state: AutodriveState, takeover: boolean): string {
@@ -60,6 +61,17 @@ export function GiHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
         return () => clearTimeout(timer)
     }, [note])
 
+    // the click that follows a takeover's touch lands on the Autodrive button now in its place: ignore it
+    const tookControlAt = useRef(0)
+    const takeControl = () => {
+        if (!autodrive.state.get().on) {
+            return
+        }
+        tookControlAt.current = performance.now()
+        releaseAllSticks()
+        app.drive.stop()
+        autodrive.end("off", "you took control")
+    }
     const commit = (text: string, go: boolean) => {
         autodrive.setInstruction(text)
         if (go && text.trim()) {
@@ -85,8 +97,9 @@ export function GiHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
     return (
         <div className={`gi-hud ${mobile ? `mobile ${auto ? "auto" : "manual"}` : "dim-panel glass"} tone-${tone}`} data-testid="gi-hud">
             {mobile && (auto
-                ? <button type="button" className="dim-btn gi-mode gi-mode-manual" data-testid="take-control-button" onClick={() => autodrive.end("off", "you took control")}>Take control</button>
-                : <button type="button" className="dim-btn gi-mode gi-mode-auto" data-testid="autodrive-button" onClick={() => autodrive.start()}><span className="gi-led" aria-hidden="true" />Autodrive</button>)}
+                // while GI drives this is also STOP: on touch (as ui/DriveHud.tsx's STOP), it halts everything and hands over
+                ? <button type="button" className="dim-btn gi-mode gi-mode-manual" data-testid="take-control-button" onPointerDown={takeControl} onClick={takeControl}>Stop · take control</button>
+                : <button type="button" className="dim-btn gi-mode gi-mode-auto" data-testid="autodrive-button" onClick={() => performance.now() - tookControlAt.current > 600 && autodrive.start()}><span className="gi-led" aria-hidden="true" />Autodrive</button>)}
             {(!mobile || auto) && <div className="gi-row">
                 {!mobile && <button
                     type="button"

@@ -527,19 +527,21 @@ html.locked-viewport, html.locked-viewport body { touch-action: none; overscroll
 .gi-hud.mobile .gi-mic { width: 44px; }
 /* 16px: iOS zooms into a smaller field when it's focused */
 .gi-hud.mobile .gi-instruction { font-size: 16px; }
-/* phone: one button naming what a press does: Autodrive (the sticks are up) or Take control (GI drives, the prompt and
-   mic are up); in Autodrive the bottom is STOP alone */
+/* phone: one button naming what a press does: Autodrive (the sticks are up) or Stop · take control (GI drives, the
+   prompt and mic are up); in Autodrive the bottom is just the velocity note */
 .app .gi-hud .gi-mode { height: 44px; width: 100%; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
 .app .gi-hud .dim-btn.gi-mode-auto, .app .gi-hud .dim-btn.gi-mode-auto:hover { background: var(--gi); color: var(--primary-fg); border-color: var(--gi); }
-.app .gi-hud .dim-btn.gi-mode-manual, .app .gi-hud .dim-btn.gi-mode-manual:hover { background: transparent; color: var(--gi-you); border-color: var(--gi-you); }
+/* while GI drives the button is also STOP: STOP's red outline, filled while pressed */
+.app .gi-hud .dim-btn.gi-mode-manual, .app .gi-hud .dim-btn.gi-mode-manual:hover { background: color-mix(in srgb, #e5484d 16%, var(--card)); color: #ff8a8d; border: 1.5px solid #e5484d; }
+.app .gi-hud .dim-btn.gi-mode-manual:active { background: #e5484d; color: #fff; }
 .gi-mode-auto .gi-led { background: currentColor; }
-.app.mobile:has(.drive-hud.auto) { --drive-hud-h: 76px; }
+.app.mobile:has(.drive-hud.auto) { --drive-hud-h: 0px; }
 .drive-hud.mobile.auto { height: var(--drive-hud-h); grid-template-columns: 1fr min(40vw, 170px) 1fr; }
 .gi-hud.mobile.manual { padding: 4px; }
 @media (orientation: landscape) and (max-height: 520px) {
     .app.mobile { --drive-hud-h: min(62vh, 260px); }
-    .app.mobile:has(.drive-hud.auto) { --drive-hud-h: 76px; }
-    .drive-hud.mobile.auto { height: auto; }
+    .app.mobile:has(.drive-hud.auto) { --drive-hud-h: 0px; }
+    .drive-hud.mobile.auto { height: auto; grid-template-columns: 1fr min(50vw, 320px) 1fr; }
     .app .gi-hud .gi-mode { height: 36px; }
     /* the sticks take most of the height and the camera sits top-center: GI takes the top-right corner beside it, one
        compact row so it ends above the stick zones */
