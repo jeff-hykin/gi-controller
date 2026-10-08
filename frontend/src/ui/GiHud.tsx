@@ -98,7 +98,7 @@ export function GiHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
         <div className={`gi-hud ${mobile ? `mobile ${auto ? "auto" : "manual"}` : "dim-panel glass"} tone-${tone}`} data-testid="gi-hud">
             {mobile && (auto
                 // while GI drives this is also STOP: on touch (as ui/DriveHud.tsx's STOP), it halts everything and hands over
-                ? <button type="button" className="dim-btn gi-mode gi-mode-manual" data-testid="take-control-button" onPointerDown={takeControl} onClick={takeControl}>Stop · take control</button>
+                ? <button type="button" className="dim-btn gi-mode gi-mode-manual" data-testid="take-control-button" onPointerDown={takeControl} onClick={takeControl}>Take control</button>
                 : <button type="button" className="dim-btn gi-mode gi-mode-auto" data-testid="autodrive-button" onClick={() => performance.now() - tookControlAt.current > 600 && autodrive.start()}><span className="gi-led" aria-hidden="true" />Autodrive</button>)}
             {(!mobile || auto) && <div className="gi-row">
                 {!mobile && <button

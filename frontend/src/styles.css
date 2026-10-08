@@ -169,12 +169,12 @@ body.dark .record-control { --record: #e5484d; --record-hover: #f0595e; }
 .record-clock, .record-extra { font-size: 11.5px; }
 .record-more { width: 30px; height: 30px; padding: 0; }
 /* Record │ … as one red box: the split owns the border and fill, each segment just its hover */
-.record-split { display: inline-flex; align-items: stretch; height: 30px; border: 1px solid var(--record); border-radius: var(--radius); background: var(--record); overflow: hidden; }
-body.dark .record-split { box-shadow: var(--record-glow); }
+/* a red outline, not a red block: it shouldn't outshout the driving controls */
+.record-split { display: inline-flex; align-items: stretch; height: 30px; border: 1.5px solid var(--record); border-radius: var(--radius); background: color-mix(in srgb, var(--record) 12%, var(--card)); overflow: hidden; }
 .record-control .record-split > .dim-btn { height: 100%; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-.record-control .record-split > .record-toggle { padding: 0 11px; color: var(--record-fg); font-weight: 600; }
-.record-control .record-split > .record-more { width: 30px; padding: 0; border-left: 1px solid rgba(255, 255, 255, 0.35); color: var(--record-fg); }
-.record-control .record-split > .dim-btn:hover:not(:disabled), .record-control .record-split > .record-more.on { background: var(--record-hover); }
+.record-control .record-split > .record-toggle { padding: 0 11px; color: var(--record); font-weight: 600; }
+.record-control .record-split > .record-more { width: 30px; padding: 0; border-left: 1px solid color-mix(in srgb, var(--record) 50%, transparent); color: var(--record); }
+.record-control .record-split > .dim-btn:hover:not(:disabled), .record-control .record-split > .record-more.on { background: color-mix(in srgb, var(--record) 25%, transparent); }
 .record-control .record-split > .dim-btn:focus-visible { box-shadow: inset 0 0 0 2px var(--record-fg); }
 .record-control .record-split > .dim-btn:disabled { opacity: 0.6; }
 /* while recording: the box goes dark with a red outline, and the button is "Stop recording" */
@@ -529,11 +529,11 @@ html.locked-viewport, html.locked-viewport body { touch-action: none; overscroll
 .gi-hud.mobile .gi-instruction { font-size: 16px; }
 /* phone: one button naming what a press does: Autodrive (the sticks are up) or Stop · take control (GI drives, the
    prompt and mic are up); in Autodrive the bottom is just the velocity note */
-.app .gi-hud .gi-mode { height: 44px; width: 100%; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
+.app .gi-hud .gi-mode { height: 56px; font-size: 15px; width: 100%; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
 .app .gi-hud .dim-btn.gi-mode-auto, .app .gi-hud .dim-btn.gi-mode-auto:hover { background: var(--gi); color: var(--primary-fg); border-color: var(--gi); }
-/* while GI drives the button is also STOP: STOP's red outline, filled while pressed */
-.app .gi-hud .dim-btn.gi-mode-manual, .app .gi-hud .dim-btn.gi-mode-manual:hover { background: color-mix(in srgb, #e5484d 16%, var(--card)); color: #ff8a8d; border: 1.5px solid #e5484d; }
-.app .gi-hud .dim-btn.gi-mode-manual:active { background: #e5484d; color: #fff; }
+/* while GI drives the button is also the stop: a yellow outline, filled while pressed */
+.app .gi-hud .dim-btn.gi-mode-manual, .app .gi-hud .dim-btn.gi-mode-manual:hover { background: color-mix(in srgb, var(--gi-you) 12%, var(--card)); color: var(--gi-you); border: 1.5px solid var(--gi-you); }
+.app .gi-hud .dim-btn.gi-mode-manual:active { background: var(--gi-you); color: #111; }
 .gi-mode-auto .gi-led { background: currentColor; }
 .app.mobile:has(.drive-hud.auto) { --drive-hud-h: 0px; }
 .drive-hud.mobile.auto { height: var(--drive-hud-h); grid-template-columns: 1fr min(40vw, 170px) 1fr; }
@@ -542,7 +542,7 @@ html.locked-viewport, html.locked-viewport body { touch-action: none; overscroll
     .app.mobile { --drive-hud-h: min(62vh, 260px); }
     .app.mobile:has(.drive-hud.auto) { --drive-hud-h: 0px; }
     .drive-hud.mobile.auto { height: auto; grid-template-columns: 1fr min(50vw, 320px) 1fr; }
-    .app .gi-hud .gi-mode { height: 36px; }
+    .app .gi-hud .gi-mode { height: 44px; }
     /* the sticks take most of the height and the camera sits top-center: GI takes the top-right corner beside it, one
        compact row so it ends above the stick zones */
     .gi-hud.mobile { bottom: auto; top: calc(52px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right)); left: auto;
