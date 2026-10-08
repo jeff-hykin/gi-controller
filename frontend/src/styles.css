@@ -525,10 +525,13 @@ html.locked-viewport, html.locked-viewport body { touch-action: none; overscroll
 .gi-hud.mobile .gi-instruction { font-size: 16px; }
 @media (orientation: landscape) and (max-height: 520px) {
     .app.mobile { --drive-hud-h: min(62vh, 260px); }
-    /* the sticks take most of the height: GI sits at the top, under the top bar */
-    .gi-hud.mobile { bottom: auto; top: calc(52px + env(safe-area-inset-top)); left: 50%; right: auto; transform: translateX(-50%); width: min(560px, calc(100vw - 2 * 120px)); }
-    .gi-hud.mobile .gi-autodrive, .gi-hud.mobile .gi-mic, .gi-hud.mobile .gi-instruction { height: 38px; }
-    .gi-hud.mobile .gi-mic { width: 38px; }
+    /* the sticks take most of the height and the camera sits top-center: GI takes the top-right corner beside it, one
+       compact row so it ends above the stick zones */
+    .gi-hud.mobile { bottom: auto; top: calc(52px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right)); left: auto;
+        width: min(340px, calc(50vw - min(15vw, 130px) - 16px - env(safe-area-inset-right))); }
+    .gi-hud.mobile .gi-autodrive, .gi-hud.mobile .gi-mic, .gi-hud.mobile .gi-instruction { height: 36px; }
+    .gi-hud.mobile .gi-autodrive { padding: 0 9px; }
+    .gi-hud.mobile .gi-mic { width: 36px; }
     .gi-hud.mobile .gi-thought { display: none; }
 }
 .gi-key-row { display: flex; gap: 4px; align-items: center; min-width: 0; } .gi-key-row .dim-input { flex: 1; min-width: 0; }
