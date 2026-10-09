@@ -14,8 +14,13 @@ person always one keypress away from taking over. A fork of [dim-controller](htt
   which adds the API key so no page ever sees it.
 
 ```sh
-dimos-desktop install /path/to/gi-controller      # a local clone; there's no published repo yet
+dimos-desktop install --ref main https://github.com/jeff-hykin/gi-controller
 ```
+
+You can also paste the repository URL into Desktop’s app installer. The first install builds the app with Nix.
+
+The GI endpoint adapter currently uses a provisional single-frame API, described in [docs/gi.md](docs/gi.md).
+GI’s production endpoint has not been supplied yet; use the built-in mock policy to test the UI and control flow.
 
 Then open **GI Controller** from the rail while a blueprint (sim, replay or robot) runs on zenoh. Topics appear as they
 start flowing; nothing is configured by topic name.
