@@ -3,7 +3,7 @@
 import * as THREE from "three"
 import { FatLines } from "dimos-react/three"
 import { LabelPool } from "dimos-react/three"
-import type { SceneViewer as Viewer } from "./sceneViewer.ts"
+import type { Viewer } from "dimos-react/three"
 import type { TfTree } from "dimos-react/three"
 import { Store } from "../store.ts"
 

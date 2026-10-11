@@ -5,7 +5,7 @@ import { layerTypeFor } from "./registry.ts"
 import { persistentStore, Store } from "../store.ts"
 import type { Connection, Topic } from "../transport.ts"
 import type { TfTree } from "dimos-react/three"
-import type { SceneViewer as Viewer } from "../render/sceneViewer.ts"
+import type { Viewer } from "dimos-react/three"
 import type { VideoSources } from "../video.ts"
 import type { RobotProfile } from "../../profile/types.ts"
 

@@ -9,7 +9,7 @@
         "test": "deno test -A --no-check --no-lock test/"
     },
     "dependencies": {
-        "dimos-react": "https://codeload.github.com/jeff-hykin/dimos-react/tar.gz/refs/tags/v0.1.14",
+        "dimos-react": "git+https://github.com/jeff-hykin/dimos-react.git#fce49b3c045d79a25e2f09624299c13098123541",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "three": "^0.180.0"

@@ -7,7 +7,6 @@ import { feedTf } from "./tfFeed.ts"
 import { checkTf, confirmed, type TfIssue } from "./tfCheck.ts"
 import { feedBattery } from "./batteryFeed.ts"
 import { Viewer } from "dimos-react/three"
-import type { SceneViewer } from "./render/sceneViewer.ts"
 import { watchSplatBudget } from "./render/rendering.ts"
 import { FrameHighlight } from "./render/frameHighlight.ts"
 import { LayerManager } from "./layers/manager.ts"
@@ -48,7 +47,7 @@ export interface ViewSettings {
 export class ViewerApp {
     readonly connection: Connection
     readonly tf = new TfTree()
-    readonly viewer: SceneViewer
+    readonly viewer: Viewer
     /** the TF frame picked out in the view (the TF panel's hovered row) */
     readonly highlight: FrameHighlight
     readonly video: VideoSources

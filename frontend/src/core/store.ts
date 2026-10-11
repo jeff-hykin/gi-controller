@@ -1,5 +1,5 @@
 // A tiny observable value: the core (no React) writes it, the UI reads it with useStore (dimos-react's 3D stores, e.g.
-// viewer.stats, have the same shape). Typed here: dimos-react ships untyped declarations.
+// viewer.stats, have the same shape).
 import { useSyncExternalStore } from "react"
 
 export class Store<T extends object> {

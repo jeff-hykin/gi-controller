@@ -26,7 +26,7 @@ function JointRow({ arm, joint, armed, canCommand }: { arm: ArmControl; joint: J
     const span = joint.max - joint.min
     return (
         <div className={`joint-row ${jogging ? "jogging" : ""}`} data-joint={joint.name}>
-            <Text mono small tone={jogging ? "info" : undefined} className="joint-name" title={joint.name}>{shortName(joint.name)}</Text>
+            <Text mono small className="joint-name" title={joint.name}>{shortName(joint.name)}</Text>
             <HoldButton label="−" title={`Hold to turn ${joint.name} negative`} disabled={!enabled} active={jogging < 0} onHold={() => arm.jogJoint(joint.name, -1)} onRelease={() => arm.releaseJoint()} testId={`jog-${shortName(joint.name)}-minus`} />
             <Slider
                 className="joint-slider"

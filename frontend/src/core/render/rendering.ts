@@ -2,7 +2,7 @@
 // automatic fallback that swaps splats for cubes when they can't keep up. The materials themselves are dimos-react's.
 import type * as THREE from "three"
 
-import type { SceneViewer as Viewer } from "./sceneViewer.ts"
+import type { Viewer } from "dimos-react/three"
 import { persistentStore, Store } from "../store.ts"
 
 export type PointStyle = "voxel" | "splat" | "disc" | "square"

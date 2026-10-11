@@ -3,7 +3,7 @@
 import { decode } from "./lcm/lcm.ts"
 import type { Connection } from "./transport.ts"
 import type { TfTree } from "dimos-react/three"
-import type { SceneViewer as Viewer } from "./render/sceneViewer.ts"
+import type { Viewer } from "dimos-react/three"
 
 export function feedTf(connection: Connection, tf: TfTree, viewer: Viewer) {
     const subscribed = new Set<string>()

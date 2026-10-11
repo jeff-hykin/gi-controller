@@ -6,7 +6,7 @@ import type { PointStyle } from "../core/render/rendering.ts"
 
 export function StylePicker({ value, onChange, withDefault }: { value: PointStyle | "default"; onChange: (style: PointStyle | "default") => void; withDefault?: string }) {
     const options = [
-        ...(withDefault ? [{ value: "default", label: `default · ${withDefault} (follow Settings → Rendering)` }] : []),
+        ...(withDefault ? [{ value: "default" as const, label: `default · ${withDefault} (follow Settings → Rendering)` }] : []),
         ...(Object.keys(POINT_STYLES) as PointStyle[]).map((style) => ({ value: style, label: `${POINT_STYLES[style].label} · ${POINT_STYLES[style].about}` })),
     ]
     return <RadioGroup className="style-picker" options={options} value={value} onChange={onChange} />
