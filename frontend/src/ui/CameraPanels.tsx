@@ -2,7 +2,7 @@
 // screen, which shrinks the 3D view into a picture-in-picture. Depth is drawn as a colormap; 2D detections can be
 // overlaid on any panel.
 import { useEffect, useRef, useState } from "react"
-import { createPortal } from "react-dom"
+import { Button, Card, Icon, IconButton, NumberInput, Popover, Select, Tabs, Text, Toolbar, ResizeHandle } from "dimos-react"
 import type { ViewerApp } from "../core/app.ts"
 import { type Store, useStore } from "../core/store.ts"
 import { parseKey, type Topic } from "../core/transport.ts"
@@ -11,7 +11,6 @@ import { cameraTabs, isImage, pickDefault as pickPreferred, retargetPanels } fro
 import { overlayTypeFor } from "../core/layers/registry.ts"
 import { decode } from "../core/lcm/lcm.ts"
 import { DEFAULT_DEPTH_LOOK, DEPTH_COLORMAPS, DepthCanvas, type DepthLook } from "../core/render/depth.ts"
-import { Icon } from "./icons.tsx"
 import { startPanelDrag } from "./panelDrag.ts"
 import { presetFor, QUALITY_PRESETS, readLocal, type VideoQuality, writeLocal } from "../core/videoQuality.ts"
 
@@ -173,10 +172,7 @@ export function CameraPanels({ app, layout, mobile }: { app: ViewerApp; layout: 
                     }}
                 />
             ))}
-            <button type="button" className="dim-btn icon add-camera" title="Add a camera panel" onClick={add}>
-                <Icon name="camera" size={16} />
-                <Icon name="plus" size={12} />
-            </button>
+            <Button className="dr-glass add-camera" icon="camera" iconRight="plus" title="Add a camera panel" aria-label="Add a camera panel" onClick={add} />
         </div>
     )
 }
@@ -294,43 +290,38 @@ function CameraPanel({ app, panel, index, topics, isMain, shown, mobile, onChang
     const height = Math.round(width * aspect) + HEAD_PX
     // the handle sits on the corner facing into the screen: bottom-left for a panel on the right half (the default)
     const handleLeft = panel.x < 0 || panel.x + width / 2 > (globalThis.innerWidth || 1280) / 2
-    const startResize = (event: React.PointerEvent) => {
-        event.preventDefault()
-        event.stopPropagation()
+    const resize = useRef<{ box: DOMRect; latest: number } | null>(null)
+    const startResize = () => {
         const box = element.current!.getBoundingClientRect()
-        const startX = event.clientX, startWidth = box.width
-        const handle = event.currentTarget as HTMLElement
-        handle.setPointerCapture(event.pointerId)
-        let latest = startWidth
-        const move = (moved: PointerEvent) => {
-            const grown = handleLeft ? startX - moved.clientX : moved.clientX - startX
-            latest = clampWidth(startWidth + grown, aspect)
-            // the far edge stays put: growing to the left moves the left edge
-            element.current!.style.width = `${latest}px`
-            element.current!.style.height = `${Math.round(latest * aspect) + HEAD_PX}px`
-            if (handleLeft && panel.x >= 0) {
-                element.current!.style.left = `${box.right - latest}px`
-            }
+        resize.current = { box, latest: box.width }
+    }
+    const onResize = ({ dx, done }: { dx: number; dy: number; done: boolean }) => {
+        const drag = resize.current
+        if (!drag) {
+            return
         }
-        const up = () => {
-            handle.removeEventListener("pointermove", move)
-            handle.removeEventListener("pointerup", up)
-            handle.removeEventListener("pointercancel", up)
-            setViewerWidth(latest)
-            savePanelWidth(panel.id, latest)
-            if (handleLeft && panel.x >= 0) {
-                onChange({ x: box.right - latest })
-            }
+        const { box } = drag
+        drag.latest = clampWidth(box.width + (handleLeft ? -dx : dx), aspect)
+        // the far edge stays put: growing to the left moves the left edge
+        element.current!.style.width = `${drag.latest}px`
+        element.current!.style.height = `${Math.round(drag.latest * aspect) + HEAD_PX}px`
+        if (handleLeft && panel.x >= 0) {
+            element.current!.style.left = `${box.right - drag.latest}px`
         }
-        handle.addEventListener("pointermove", move)
-        handle.addEventListener("pointerup", up)
-        handle.addEventListener("pointercancel", up)
+        if (done) {
+            setViewerWidth(drag.latest)
+            savePanelWidth(panel.id, drag.latest)
+            if (handleLeft && panel.x >= 0) {
+                onChange({ x: box.right - drag.latest })
+            }
+            resize.current = null
+        }
     }
 
     // the shown camera's tab in view (it can be off the end of a long row)
     useEffect(() => {
-        const tab = element.current?.querySelector<HTMLElement>(".camera-tab.on")
-        const row = tab?.parentElement
+        const tab = element.current?.querySelector<HTMLElement>(".camera-tabs [aria-selected=\"true\"]")
+        const row = element.current?.querySelector<HTMLElement>(".camera-tabs")
         if (tab && row && (tab.offsetLeft < row.scrollLeft || tab.offsetLeft + tab.offsetWidth > row.scrollLeft + row.clientWidth)) {
             row.scrollLeft = tab.offsetLeft - 6
         }
@@ -344,20 +335,7 @@ function CameraPanel({ app, panel, index, topics, isMain, shown, mobile, onChang
     }
 
     // the latency/quality menu (gear over the picture)
-    const [qualityOpen, setQualityOpen] = useState(false)
     const quality = useQuality(app, topic, depth)
-    useEffect(() => {
-        if (!qualityOpen) {
-            return
-        }
-        const close = (event: Event) => {
-            if (!(event.target as HTMLElement).closest?.(".camera-quality, .quality-menu")) {
-                setQualityOpen(false)
-            }
-        }
-        addEventListener("pointerdown", close, true)
-        return () => removeEventListener("pointerdown", close, true)
-    }, [qualityOpen])
 
     const floating = !isMain
     // on a phone the controls under the camera (view controls, scene tools) sit at its real bottom, which its aspect sets
@@ -384,89 +362,82 @@ function CameraPanel({ app, panel, index, topics, isMain, shown, mobile, onChang
     const info = size.width ? `${size.width}×${size.height}${size.fps ? ` · ${size.fps} fps` : ""}${depth && depthRange ? ` · ${depthRange[0].toFixed(1)}–${depthRange[1].toFixed(1)} m` : ""}` : ""
     const overlays = topics.filter((other) => overlayTypeFor(other.type))
     const tabs = cameraTabs(topics)
+    const gone = !topic && panel.key ? (everSeen.current ? "(gone) " : "") + (parseKey(panel.key)?.name ?? panel.key) : null
     return (
-        <div ref={element} className={`dim-panel camera-panel ${isMain ? "main" : "floating"}`} style={style} data-panel={panel.id}>
-            <div className="camera-head" onPointerDown={startDrag} onDoubleClick={onMain} title={info}>
-                <div className="camera-tabs" role="tablist" aria-label="Cameras" onWheel={(event) => (event.currentTarget.scrollLeft += event.deltaY)}>
-                    {!topic && panel.key && (
-                        <span className="camera-tab gone" title={parseKey(panel.key)?.name ?? panel.key}>{(everSeen.current ? "(gone) " : "") + (parseKey(panel.key)?.name ?? panel.key)}</span>
+        <Card padded={false} ref={element} className={`camera-panel ${isMain ? "main" : "floating"}`} style={style} data-panel={panel.id}>
+            <Toolbar className="camera-head" onPointerDown={startDrag} onDoubleClick={onMain} title={info}>
+                <div className="camera-tabs" onWheel={(event) => (event.currentTarget.scrollLeft += event.deltaY)}>
+                    {gone && <Text mono small muted title={parseKey(panel.key)?.name ?? panel.key}>{gone}</Text>}
+                    {tabs.length > 0 && (
+                        <Tabs
+                            size="sm"
+                            label="Cameras"
+                            items={tabs.map((tab) => ({ value: tab.topic.key, label: tab.label, title: `${tab.topic.name} (${tab.topic.type})` }))}
+                            value={panel.key}
+                            onChange={(key: string) => onChange({ key, picked: key })}
+                        />
                     )}
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.topic.key}
-                            type="button"
-                            role="tab"
-                            aria-selected={tab.topic.key === panel.key}
-                            className={`camera-tab ${tab.topic.key === panel.key ? "on" : ""} ${tab.depth ? "depth" : ""}`}
-                            title={`${tab.topic.name} (${tab.topic.type})`}
-                            onClick={() => onChange({ key: tab.topic.key, picked: tab.topic.key })}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                    {!tabs.length && !panel.key && <span className="camera-tab gone">no camera on the bus</span>}
+                    {!tabs.length && !panel.key && <Text mono small muted>no camera on the bus</Text>}
                 </div>
                 {overlays.length > 0 && (
-                    <select className="dim-select" value={panel.overlay} onChange={(event) => onChange({ overlay: event.target.value })} aria-label="Overlay">
-                        <option value="">no overlay</option>
-                        {overlays.map((other) => <option key={other.key} value={other.key}>{other.name}</option>)}
-                    </select>
+                    <Select size="sm" aria-label="Overlay" value={panel.overlay} options={[["", "no overlay"], ...overlays.map((other) => [other.key, other.name])]} onChange={(overlay: string) => onChange({ overlay })} />
                 )}
                 {depth && (
                     <>
-                        <select className="dim-select" value={depthLook.colormap} onChange={(event) => onChange({ depth: { ...depthLook, colormap: event.target.value } })} aria-label="Depth colormap">
-                            {DEPTH_COLORMAPS.map((name) => <option key={name} value={name}>{name}</option>)}
-                        </select>
-                        <input className="dim-input number depth-range" type="number" step="0.1" placeholder="near" title="near (m); empty = auto" value={depthLook.near ?? ""} onChange={(event) => onChange({ depth: { ...depthLook, near: event.target.value === "" ? null : Number(event.target.value) } })} />
-                        <input className="dim-input number depth-range" type="number" step="0.1" placeholder="far" title="far (m); empty = auto" value={depthLook.far ?? ""} onChange={(event) => onChange({ depth: { ...depthLook, far: event.target.value === "" ? null : Number(event.target.value) } })} />
+                        <Select size="sm" aria-label="Depth colormap" value={depthLook.colormap} options={DEPTH_COLORMAPS} onChange={(colormap: string) => onChange({ depth: { ...depthLook, colormap } })} />
+                        <NumberInput nullable size="sm" step={0.1} className="depth-range" placeholder="near" title="near (m); empty = auto" value={depthLook.near} onChange={(near: number | null) => onChange({ depth: { ...depthLook, near } })} />
+                        <NumberInput nullable size="sm" step={0.1} className="depth-range" placeholder="far" title="far (m); empty = auto" value={depthLook.far} onChange={(far: number | null) => onChange({ depth: { ...depthLook, far } })} />
                     </>
                 )}
-                <span className="camera-info">{info || "…"}</span>
+                <Text mono small muted className="camera-info">{info || "…"}</Text>
                 {isMain && (
-                    <button type="button" className="dim-btn icon icon-button camera-fit" aria-pressed={fill} title={fill ? "Fill: the picture fills the screen, edges cropped (click to fit the whole picture)" : "Fit: the whole picture, letterboxed (click to fill the screen)"} onClick={toggleFill}>
-                        <Icon name={fill ? "fill" : "fit"} size={15} />
-                    </button>
+                    <IconButton size="sm" icon={fill ? "fill" : "fit"} pressed={fill} label={fill ? "Fill: the picture fills the screen, edges cropped (click to fit the whole picture)" : "Fit: the whole picture, letterboxed (click to fill the screen)"} onClick={toggleFill} />
                 )}
-                <button type="button" className="dim-btn icon icon-button" title={isMain ? "Back to the 3D view" : "Fullscreen camera (3D becomes a popup)"} onClick={onMain}><Icon name="expand" size={15} /></button>
-                <button type="button" className="dim-btn icon icon-button" title="Close" onClick={onClose}><Icon name="close" size={15} /></button>
-            </div>
+                <IconButton size="sm" icon="expand" label={isMain ? "Back to the 3D view" : "Fullscreen camera (3D becomes a popup)"} onClick={onMain} />
+                <IconButton size="sm" icon="close" label="Close" onClick={onClose} />
+            </Toolbar>
             <div className={`camera-body ${isMain && fill ? "fill" : ""}`} onClick={mobile && !isMain ? onMain : undefined}>
                 {depth ? <div ref={depthHost} className="camera-media depth-host" /> : <video ref={video} className="camera-media" muted playsInline autoPlay disablePictureInPicture disableRemotePlayback />}
                 <canvas ref={overlayCanvas} className="camera-overlay" />
                 {topic && !depth && (!mobile || isMain) && (
-                    <div className={`camera-quality ${qualityOpen ? "open" : ""}`} onClick={(event) => event.stopPropagation()}>
-                        <button type="button" className="dim-btn icon quality-gear" title={`Latency ↔ quality: ${presetFor(quality).label}`} aria-label="Latency or quality" aria-haspopup="menu" aria-expanded={qualityOpen} onClick={() => setQualityOpen(!qualityOpen)}>
-                            <Icon name="settings" size={14} />
-                        </button>
-                        {qualityOpen && createPortal(
-                            <div className="dim-panel quality-menu" role="menu" aria-label="Latency or quality" style={menuPosition(element.current)} onClick={(event) => event.stopPropagation()}>
-                                <div className="quality-title">Latency ↔ quality</div>
-                                {QUALITY_PRESETS.map((preset) => (
-                                    <button
-                                        key={preset.id}
-                                        type="button"
-                                        role="menuitemradio"
-                                        aria-checked={quality === preset.id}
-                                        className={`quality-option ${quality === preset.id ? "on" : ""}`}
-                                        onClick={() => {
-                                            app.video.setQuality(topic, preset.id)
-                                            setQualityOpen(false)
-                                        }}
-                                    >
-                                        <span className="quality-name">{preset.label}</span>
-                                        <span className="quality-about">{preset.about}</span>
-                                    </button>
-                                ))}
-                            </div>,
-                            document.body,
-                        )}
+                    <div className="camera-quality" onClick={(event) => event.stopPropagation()}>
+                        <Popover
+                            placement="bottom-end"
+                            trigger={<IconButton size="sm" variant="default" icon="settings" className="dr-glass quality-gear" label={`Latency ↔ quality: ${presetFor(quality).label}`} aria-haspopup="menu" />}
+                        >
+                            {({ close }: { close: () => void }) => (
+                                <div role="menu" aria-label="Latency or quality" className="quality-menu">
+                                    <Text as="div" small muted className="dr-label">Latency ↔ quality</Text>
+                                    {QUALITY_PRESETS.map((preset) => (
+                                        <Button
+                                            key={preset.id}
+                                            variant="ghost"
+                                            block
+                                            role="menuitemradio"
+                                            aria-checked={quality === preset.id}
+                                            pressed={quality === preset.id}
+                                            className="quality-option"
+                                            onClick={() => {
+                                                app.video.setQuality(topic, preset.id)
+                                                close()
+                                            }}
+                                        >
+                                            <span>
+                                                <Text as="div" small>{preset.label}</Text>
+                                                <Text as="div" small muted>{preset.about}</Text>
+                                            </span>
+                                        </Button>
+                                    ))}
+                                </div>
+                            )}
+                        </Popover>
                     </div>
                 )}
             </div>
             {floating && !mobile && (
-                <div className={`camera-resize ${handleLeft ? "left" : "right"}`} title="Drag to resize" aria-label="Resize the camera" onPointerDown={startResize} />
+                <ResizeHandle corner={handleLeft ? "bottom-left" : "bottom-right"} label="Resize the camera" onStart={startResize} onResize={onResize} />
             )}
-        </div>
+        </Card>
     )
 }
 
@@ -504,16 +475,4 @@ function useQuality(app: ViewerApp, topic: Topic | null, depth: boolean): VideoQ
         }
     }, [app, topic?.key, depth])
     return quality
-}
-
-/** The quality menu hangs from the panel's top-right corner, kept inside the window (a portal: the panel clips). */
-function menuPosition(panel: HTMLElement | null): React.CSSProperties {
-    const box = panel?.getBoundingClientRect()
-    if (!box) {
-        return {}
-    }
-    const menuWidth = 236
-    const left = Math.max(8, Math.min(box.right - menuWidth - 6, innerWidth - menuWidth - 8))
-    const top = Math.min(box.top + 33 + 38, innerHeight - 220)
-    return { position: "fixed", left, top, zIndex: 40 }
 }

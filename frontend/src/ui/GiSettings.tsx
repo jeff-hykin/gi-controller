@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import type { ViewerApp } from "../core/app.ts"
 import { useStore } from "../core/store.ts"
-import { Field, Slider, Toggle } from "./controls.tsx"
+import { Button, Field, Row, Slider, Text, TextInput, Toggle } from "dimos-react"
 
 export function GiSettings({ app }: { app: ViewerApp }) {
     const settings = useStore(app.gi.settings)
@@ -34,34 +34,35 @@ export function GiSettings({ app }: { app: ViewerApp }) {
 
     return (
         <div className="gi-settings" data-testid="gi-settings">
-            <Field label="Policy" hint="Empty endpoint: the built-in mock (obeys forward, back, turn left / right, spin, explore, stop, &quot;for N seconds&quot;). With an endpoint, each step goes through this app's backend, which adds the key.">
-                <input
-                    className="dim-input"
-                    data-testid="gi-endpoint"
-                    placeholder="mock (no endpoint)"
-                    defaultValue={settings.endpoint}
-                    onBlur={(event) => update({ endpoint: event.target.value.trim() })}
-                />
+            <Field inline label="Policy" title="Empty endpoint: the built-in mock (obeys forward, back, turn left / right, spin, explore, stop, &quot;for N seconds&quot;). With an endpoint, each step goes through this app's backend, which adds the key.">
+                <CommitInput data-testid="gi-endpoint" placeholder="mock (no endpoint)" value={settings.endpoint} onCommit={(endpoint) => update({ endpoint })} />
             </Field>
-            <p className="hint">Using: {autodrive.policy}</p>
+            <Text as="p" muted small>Using: {autodrive.policy}</Text>
             {settings.endpoint && (
                 <>
-                    <Field label="Model"><input className="dim-input" defaultValue={settings.model} onBlur={(event) => update({ model: event.target.value.trim() || "gi-action-1" })} /></Field>
-                    <Field label="API key" hint="Kept by the backend in its own file; never shown again, never in the settings.">
-                        <span className="gi-key-row">
-                            <input className="dim-input" type="password" autoComplete="off" placeholder={hasKey ? "set (type to replace)" : "not set"} value={key} onChange={(event) => setKey(event.target.value)} />
-                            <button type="button" className="dim-btn sm" disabled={!key} onClick={() => saveKey(key)}>Save</button>
-                            {hasKey && <button type="button" className="dim-btn sm" onClick={() => saveKey("")}>Clear</button>}
-                        </span>
+                    <Field inline label="Model"><CommitInput value={settings.model} onCommit={(model) => update({ model: model || "gi-action-1" })} /></Field>
+                    <Field inline label="API key" title="Kept by the backend in its own file; never shown again, never in the settings.">
+                        <Row gap={4} className="gi-key-row">
+                            <TextInput type="password" autoComplete="off" placeholder={hasKey ? "set (type to replace)" : "not set"} value={key} onChange={setKey} />
+                            <Button size="sm" disabled={!key} onClick={() => saveKey(key)}>Save</Button>
+                            {hasKey && <Button size="sm" onClick={() => saveKey("")}>Clear</Button>}
+                        </Row>
                     </Field>
                 </>
             )}
-            {problem && <p className="problem">{problem}</p>}
-            <Field label="Steps per second" hint="How often GI is asked for an action (each one sends a camera frame)."><Slider min={1} max={20} step={1} value={settings.rateHz} format={(rate) => `${rate} Hz`} onChange={(rateHz) => update({ rateHz })} /></Field>
-            <Field label="Max autodrive speed" hint="GI's sticks are scaled by this, a share of the drive speeds below."><Slider min={0.1} max={1} step={0.05} value={settings.maxSpeed} format={(share) => `${Math.round(share * 100)}%`} onChange={(maxSpeed) => update({ maxSpeed })} /></Field>
-            <Field label="Auto-resume" hint="After you take over (any key, stick or gamepad), hand back to GI once you've let go. Off: press Autodrive to hand back."><Toggle value={settings.autoResume} onChange={(autoResume) => update({ autoResume })} /></Field>
-            {settings.autoResume && <Field label="Resume after"><Slider min={0.5} max={10} step={0.5} value={settings.resumeMs / 1000} format={(seconds) => `${seconds.toFixed(1)} s`} onChange={(seconds) => update({ resumeMs: Math.round(seconds * 1000) })} /></Field>}
-            <p className="hint">G: autodrive on / off · hold T: talk · a gamepad's A: autodrive, B: stop · Space: stop everything</p>
+            {problem && <Text as="p" small tone="danger">{problem}</Text>}
+            <Field inline label="Steps per second" title="How often GI is asked for an action (each one sends a camera frame)."><Slider min={1} max={20} step={1} value={settings.rateHz} format={(rate: number) => `${rate} Hz`} onChange={(rateHz: number) => update({ rateHz })} /></Field>
+            <Field inline label="Max autodrive speed" title="GI's sticks are scaled by this, a share of the drive speeds below."><Slider min={0.1} max={1} step={0.05} value={settings.maxSpeed} format={(share: number) => `${Math.round(share * 100)}%`} onChange={(maxSpeed: number) => update({ maxSpeed })} /></Field>
+            <Field inline label="Auto-resume" title="After you take over (any key, stick or gamepad), hand back to GI once you've let go. Off: press Autodrive to hand back."><Toggle value={settings.autoResume} onChange={(autoResume: boolean) => update({ autoResume })} /></Field>
+            {settings.autoResume && <Field inline label="Resume after"><Slider min={0.5} max={10} step={0.5} value={settings.resumeMs / 1000} format={(seconds: number) => `${seconds.toFixed(1)} s`} onChange={(seconds: number) => update({ resumeMs: Math.round(seconds * 1000) })} /></Field>}
+            <Text as="p" muted small>G: autodrive on / off · hold T: talk · a gamepad's A: autodrive, B: stop · Space: stop everything</Text>
         </div>
     )
+}
+
+/** A text box that saves (trimmed) when it loses focus or on Enter */
+function CommitInput({ value, onCommit, ...rest }: { value: string; onCommit: (value: string) => void; placeholder?: string; "data-testid"?: string }) {
+    const [text, setText] = useState(value)
+    useEffect(() => setText(value), [value])
+    return <TextInput {...rest} value={text} onChange={setText} onBlur={() => onCommit(text.trim())} onEnter={() => onCommit(text.trim())} />
 }

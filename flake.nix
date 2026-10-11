@@ -26,7 +26,7 @@
                         pname = "gi-controller-frontend";
                         version = "0.1.0";
                         src = ./frontend;
-                        npmDepsHash = "sha256-X7hPD3lKd7TRhqOC74+tBy9A84vXwBxaKUBRG1bizxE=";
+                        npmDepsHash = "sha256-Thcnyz1TUqVOV0b7Kxa23/O0w84lEcZ3ACL0N4S32Wg=";
                         installPhase = ''
                             cp -r dist $out
                         '';

@@ -1,6 +1,6 @@
 // The panel the top bar's tabs open: a side panel on a desktop, a bottom sheet on a phone.
+import { IconButton, Panel } from "dimos-react"
 import type { ViewerApp } from "../core/app.ts"
-import { Icon } from "./icons.tsx"
 import { LayersPanel } from "./LayersPanel.tsx"
 import { TfPanel } from "./TfPanel.tsx"
 import { SettingsPanel } from "./SettingsPanel.tsx"
@@ -11,16 +11,17 @@ const TITLES: Record<Tab, string> = { layers: "Layers", tf: "Transforms", settin
 
 export function SidePanel({ app, tab, onClose, mobile }: { app: ViewerApp; tab: Tab; onTab: (tab: Tab) => void; onClose: () => void; mobile: boolean }) {
     return (
-        <aside className={`dim-panel glass side-panel ${mobile ? "sheet" : ""}`} data-tab={tab}>
-            <div className="panel-head">
-                <h2 className="dim-card-title">{TITLES[tab]}</h2>
-                <button type="button" className="dim-btn icon icon-button" title="Close" aria-label="Close" onClick={onClose}><Icon name="close" /></button>
-            </div>
-            <div className="panel-body">
-                {tab === "layers" && <LayersPanel app={app} />}
-                {tab === "tf" && <TfPanel app={app} />}
-                {tab === "settings" && <SettingsPanel app={app} />}
-            </div>
-        </aside>
+        <Panel
+            glass
+            className={`side-panel ${mobile ? "sheet" : ""}`}
+            bodyClassName="panel-body"
+            data-tab={tab}
+            title={TITLES[tab]}
+            actions={<IconButton icon="close" label="Close" size="sm" onClick={onClose} />}
+        >
+            {tab === "layers" && <LayersPanel app={app} />}
+            {tab === "tf" && <TfPanel app={app} />}
+            {tab === "settings" && <SettingsPanel app={app} />}
+        </Panel>
     )
 }

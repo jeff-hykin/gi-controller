@@ -4,7 +4,8 @@
 import type { ViewerApp } from "../core/app.ts"
 import { useStore } from "../core/store.ts"
 import type { Axis } from "../profile/types.ts"
-import { Joystick, releaseAllSticks } from "./Joystick.tsx"
+import { Badge, Button, Card, KeyCap, releaseAllThumbSticks, Text, ThumbStick } from "dimos-react"
+import { shapeStick, smoothToward } from "../core/stick.ts"
 import type { DriveHalt } from "../core/drive.ts"
 
 /** Driving is held (latency over the max, or the link lost): why, and the Reconnect button. */
@@ -12,10 +13,10 @@ function HaltNotice({ app, halt }: { app: ViewerApp; halt: DriveHalt }) {
     const why = halt.reason === "lost" ? "Link lost" : `Latency over ${halt.maxMs} ms${halt.latencyMs !== null ? ` (${halt.latencyMs} ms)` : ""}`
     return (
         <div className="drive-halt" role="alert" data-testid="drive-halt">
-            <span>{why} · driving stopped</span>
-            <button type="button" className="dim-btn reconnect-button" data-testid="reconnect-button" disabled={halt.reconnecting} onClick={() => app.reconnect()}>
+            <Text small tone="danger">{why} · driving stopped</Text>
+            <Button variant="danger" size="sm" className="reconnect-button" data-testid="reconnect-button" loading={halt.reconnecting} onClick={() => app.reconnect()}>
                 {halt.reconnecting ? "Reconnecting…" : "Reconnect"}
-            </button>
+            </Button>
         </div>
     )
 }
@@ -38,40 +39,47 @@ export function DriveHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
         const auto = autodrive.on
         return (
             <div className={`drive-hud mobile ${moving ? "moving" : ""} ${auto ? "auto" : ""}`} data-testid="drive-hud-mobile">
-                {auto ? <span /> : <Joystick
-                    side="left"
+                {auto ? <span /> : <ThumbStick
+                    className="stick-zone"
+                    data-testid="stick-left"
                     label={usesStrafe ? "move" : "forward / back"}
                     axes={usesStrafe ? "xy" : "y"}
-                    onMove={(x, y) => drive.setAxes("left-stick", { forward: y, strafe: usesStrafe ? -x : 0 })}
+                    shape={shapeStick}
+                    smooth={smoothToward}
+                    onMove={(x: number, y: number) => drive.setAxes("left-stick", { forward: y, strafe: usesStrafe ? -x : 0 })}
                 />}
                 <div className="hud-center">
                     {state.halt && <HaltNotice app={app} halt={state.halt} />}
-                    <span className="dim-badge hud-note" data-testid="drive-readout">
+                    <Badge className="hud-note" data-testid="drive-readout">
                         {command ? `${command.dryRun ? "dry run" : command.source} · ${velocity(command.linear, command.angular)}` : velocity(state.twist.linear, state.twist.angular)}
-                    </span>
-                    {!auto && <button
-                        type="button"
-                        className="dim-btn stop-button"
+                    </Badge>
+                    {!auto && <Button
+                        variant="danger"
+                        block
+                        className="stop-button"
                         data-testid="stop-button"
                         onPointerDown={() => {
                             // on touch, not on the click after it: no 300 ms, and it works while a thumb holds a stick
-                            releaseAllSticks()
+                            releaseAllThumbSticks()
                             drive.stop()
                         }}
                         onClick={() => {
-                            releaseAllSticks()
+                            releaseAllThumbSticks()
                             drive.stop()
                         }}
                     >
                         STOP
-                    </button>}
-                    {!auto && <button type="button" className={`dim-btn boost-button ${state.boost ? "on" : ""}`} aria-pressed={state.boost} onClick={() => drive.setBoost(!state.boost)}>{state.boost ? "FAST ON" : "FAST"}</button>}
+                    </Button>}
+                    {!auto && <Button block className="boost-button" pressed={state.boost} variant={state.boost ? "primary" : "default"} onClick={() => drive.setBoost(!state.boost)}>{state.boost ? "FAST ON" : "FAST"}</Button>}
                 </div>
-                {auto ? <span /> : <Joystick
-                    side="right"
+                {auto ? <span /> : <ThumbStick
+                    className="stick-zone"
+                    data-testid="stick-right"
                     label={usesVertical ? "turn · up / down" : "turn"}
                     axes={usesVertical ? "xy" : "x"}
-                    onMove={(x, y) => drive.setAxes("right-stick", { turn: -x, vertical: usesVertical ? y : 0 })}
+                    shape={shapeStick}
+                    smooth={smoothToward}
+                    onMove={(x: number, y: number) => drive.setAxes("right-stick", { turn: -x, vertical: usesVertical ? y : 0 })}
                 />}
             </div>
         )
@@ -79,21 +87,21 @@ export function DriveHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
 
     const cell = (axis: Axis, sign: number) => {
         const key = keyFor(axis, sign)
-        return key ? <span className={`key ${lit(axis, sign) ? "down" : ""}`}>{key}</span> : <span className="key empty" />
+        return key ? <KeyCap down={lit(axis, sign)} label={key} /> : <KeyCap empty label="" />
     }
     return (
-        <div className={`dim-panel glass drive-hud corner ${state.publishing ? "moving" : ""} ${state.halt ? "halted" : ""}`} data-testid="drive-hud">
+        <Card glass padded={false} className={`drive-hud corner ${state.publishing ? "moving" : ""} ${state.halt ? "halted" : ""}`} data-testid="drive-hud">
             {state.halt && <HaltNotice app={app} halt={state.halt} />}
             <div className="keys" aria-label="drive keys">
-                <div>{usesStrafe ? cell("strafe", 1) : usesVertical ? cell("vertical", -1) : <span className="key empty" />}{cell("forward", 1)}{usesStrafe ? cell("strafe", -1) : usesVertical ? cell("vertical", 1) : <span className="key empty" />}</div>
+                <div>{usesStrafe ? cell("strafe", 1) : usesVertical ? cell("vertical", -1) : <KeyCap empty label="" />}{cell("forward", 1)}{usesStrafe ? cell("strafe", -1) : usesVertical ? cell("vertical", 1) : <KeyCap empty label="" />}</div>
                 <div>{cell("turn", 1)}{cell("forward", -1)}{cell("turn", -1)}</div>
             </div>
-            <span className={`key shift ${state.boost ? "down" : ""}`}>⇧</span>
-            <div className="hud-readout" data-testid="drive-readout">
+            <KeyCap down={state.boost} label="⇧" />
+            <Text as="div" mono small className="hud-readout" data-testid="drive-readout">
                 {command
-                    ? <>{command.dryRun ? "dry run · nothing sent" : `${command.source} driving`}<br /><span className="dim">{velocity(command.linear, command.angular)} · {command.seconds} s</span></>
-                    : <>{velocity(state.twist.linear, state.twist.angular)}<br /><span className="dim">→ {state.topic || "nothing"}</span></>}
-            </div>
-        </div>
+                    ? <>{command.dryRun ? "dry run · nothing sent" : `${command.source} driving`}<br /><Text muted>{velocity(command.linear, command.angular)} · {command.seconds} s</Text></>
+                    : <>{velocity(state.twist.linear, state.twist.angular)}<br /><Text muted>→ {state.topic || "nothing"}</Text></>}
+            </Text>
+        </Card>
     )
 }

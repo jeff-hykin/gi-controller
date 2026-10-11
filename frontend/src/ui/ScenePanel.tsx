@@ -3,17 +3,15 @@
 // (each PointCloud2 on the bus: on/off, this viewer's bandwidth preset, color and size, live points and bytes a second)
 // and an off switch: off, every 3D layer stops (nothing subscribed, no bandwidth) and only a small bar to turn it back
 // on is left. View-only: nothing here moves the robot.
-import { type PointerEvent as ReactPointerEvent, type RefObject, useEffect, useRef, useState } from "react"
-import { createPortal } from "react-dom"
+import { type PointerEvent as ReactPointerEvent, type RefObject, useEffect, useRef } from "react"
+import { Button, Card, ColorSwatch, Icon, IconButton, Popover, ResizeHandle, Segmented, Select, Slider, Text, Toggle, Toolbar } from "dimos-react"
 import type { ViewerApp } from "../core/app.ts"
 import type { LayerEntry } from "../core/layers/manager.ts"
 import { type Store, useStore } from "../core/store.ts"
 import { CLOUD_PRESETS, cloudQualities, cloudQualityOf, type CloudQuality, type CloudRate, cloudRates, formatBytes, formatCount, scenePanel, setCloudQuality, updateScenePanel } from "../core/cloudQuality.ts"
-import { GRADIENTS } from "../core/render/gradients.ts"
-import type { PointLook } from "../core/render/pointMaterial.ts"
+import { GRADIENTS } from "dimos-react/three"
+import type { PointLook } from "../core/render/rendering.ts"
 import type { CloudSettings } from "../layers/pointcloud.tsx"
-import { Icon } from "./icons.tsx"
-import { Toggle } from "./controls.tsx"
 import { clampPanelBox, startPanelDrag } from "./panelDrag.ts"
 import { ViewControls } from "./ViewControls.tsx"
 import { TfFootnote } from "./TfFootnote.tsx"
@@ -49,14 +47,10 @@ export function ScenePanel({ host, app, mainCamera, mobile, onMain, onTf }: {
     const state = useStore(scenePanel)
     const off = state.off
     const element = useRef<HTMLDivElement>(null)
-    const [menuOpen, setMenuOpen] = useState(false)
 
     // off is per viewer and survives a reload: the layers stay stopped from the start
     useEffect(() => {
         app?.layers.setPaused(off)
-        if (off) {
-            setMenuOpen(false)
-        }
     }, [app, off])
 
     const floating = mainCamera
@@ -69,33 +63,30 @@ export function ScenePanel({ host, app, mainCamera, mobile, onMain, onTf }: {
 
     // the handle on the corner facing into the screen (bottom-left while it sits on the right half: the default)
     const handleLeft = state.x < 0 || state.x + Math.max(state.width, MIN_WIDTH) / 2 > (globalThis.innerWidth || 1280) / 2
-    const startResize = (event: ReactPointerEvent) => {
-        event.preventDefault()
-        event.stopPropagation()
+    // grows from the handle's corner; the far edges stay put
+    const resize = useRef<{ box: DOMRect; width: number; height: number; left: number } | null>(null)
+    const startResize = () => {
         const panel = element.current!
         const box = panel.getBoundingClientRect()
-        const startX = event.clientX, startY = event.clientY
-        const handle = event.currentTarget as HTMLElement
-        handle.setPointerCapture(event.pointerId)
-        let width = box.width, height = box.height, left = box.left
-        // from here on it's placed by its top-left corner, so the far edges stay put while it grows
+        resize.current = { box, width: box.width, height: box.height, left: box.left }
+        // from here on it's placed by its top-left corner
         Object.assign(panel.style, { left: `${box.left}px`, top: `${box.top}px`, right: "auto", bottom: "auto" })
-        const move = (moved: PointerEvent) => {
-            const grown = handleLeft ? startX - moved.clientX : moved.clientX - startX
-            width = Math.round(Math.max(MIN_WIDTH, Math.min(handleLeft ? box.right - 8 : innerWidth - box.left - 8, box.width + grown)))
-            height = Math.round(Math.max(MIN_HEIGHT, Math.min(innerHeight - box.top - 8, box.height + moved.clientY - startY)))
-            left = handleLeft ? box.right - width : box.left
-            Object.assign(panel.style, { width: `${width}px`, height: `${height}px`, left: `${left}px` })
+    }
+    const onResize = ({ dx, dy, done }: { dx: number; dy: number; done: boolean }) => {
+        const drag = resize.current
+        if (!drag) {
+            return
         }
-        const up = () => {
-            handle.removeEventListener("pointermove", move)
-            handle.removeEventListener("pointerup", up)
-            handle.removeEventListener("pointercancel", up)
-            updateScenePanel({ width, height, x: left, y: box.top })
+        const { box } = drag
+        const grown = handleLeft ? -dx : dx
+        drag.width = Math.round(Math.max(MIN_WIDTH, Math.min(handleLeft ? box.right - 8 : innerWidth - box.left - 8, box.width + grown)))
+        drag.height = Math.round(Math.max(MIN_HEIGHT, Math.min(innerHeight - box.top - 8, box.height + dy)))
+        drag.left = handleLeft ? box.right - drag.width : box.left
+        Object.assign(element.current!.style, { width: `${drag.width}px`, height: `${drag.height}px`, left: `${drag.left}px` })
+        if (done) {
+            updateScenePanel({ width: drag.width, height: drag.height, x: drag.left, y: box.top })
+            resize.current = null
         }
-        handle.addEventListener("pointermove", move)
-        handle.addEventListener("pointerup", up)
-        handle.addEventListener("pointercancel", up)
     }
 
     // the remembered box made safe for this window (a smaller screen, a bad saved value); unset = the CSS corner and size
@@ -108,88 +99,81 @@ export function ScenePanel({ host, app, mainCamera, mobile, onMain, onTf }: {
     return (
         <div ref={element} className={`scene-slot ${floating ? "floating" : ""} ${off ? "off" : ""}`} style={style} data-testid="scene-panel">
             {floating && (
-                <div className="camera-head scene-head" onPointerDown={startDrag} onDoubleClick={off ? undefined : onMain}>
-                    <span className="map-title"><Icon name="cube" size={14} />3D</span>
+                <Toolbar className="camera-head scene-head" onPointerDown={startDrag} onDoubleClick={off ? undefined : onMain}>
+                    <Text small className="map-title"><Icon name="cube" size={14} />3D</Text>
                     {app && !off && <SceneRate />}
-                    {off && <span className="camera-info scene-off-note">off · nothing subscribed</span>}
-                    {app && !off && <CloudButton app={app} open={menuOpen} onOpen={setMenuOpen} />}
-                    {!off && <button type="button" className="dim-btn icon icon-button" title="Fullscreen 3D view (the camera becomes a popup)" aria-label="Fullscreen 3D view" onClick={onMain}><Icon name="expand" size={15} /></button>}
+                    {off && <Text mono small muted className="camera-info">off · nothing subscribed</Text>}
+                    {app && !off && <CloudButton app={app} />}
+                    {!off && <IconButton size="sm" icon="expand" label="Fullscreen 3D view (the camera becomes a popup)" onClick={onMain} />}
                     <PowerButton off={off} onChange={setOff} />
-                </div>
+                </Toolbar>
             )}
             <div ref={host} className="scene" />
             {app && !floating && !off && <ViewControls app={app} />}
             {app && !floating && !off && <TfFootnote app={app} onOpen={onTf} />}
             {app && !floating && !off && (
-                <div className="scene-tools dim-panel">
+                <Toolbar floating className="scene-tools">
                     <SceneRate />
-                    <CloudButton app={app} open={menuOpen} onOpen={setMenuOpen} />
+                    <CloudButton app={app} />
                     <PowerButton off={off} onChange={setOff} />
-                </div>
+                </Toolbar>
             )}
             {!floating && off && (
-                <div className="dim-panel scene-off">
+                <Card glass className="scene-off">
                     <Icon name="cube" size={15} />
-                    <span>3D view off · nothing subscribed</span>
+                    <Text small muted>3D view off · nothing subscribed</Text>
                     <PowerButton off={off} onChange={setOff} />
-                </div>
+                </Card>
             )}
             {floating && !off && !mobile && (
-                <div className={`camera-resize ${handleLeft ? "left" : "right"}`} title="Drag to resize" aria-label="Resize the 3D view" onPointerDown={startResize} />
+                <ResizeHandle corner={handleLeft ? "bottom-left" : "bottom-right"} label="Resize the 3D view" onStart={startResize} onResize={onResize} />
             )}
-            {app && menuOpen && !off && <CloudMenu app={app} anchor={element.current} onClose={() => setMenuOpen(false)} />}
         </div>
     )
 }
 
 function PowerButton({ off, onChange }: { off: boolean; onChange: (off: boolean) => void }) {
     const title = off ? "Turn the 3D view on (subscribes to its layers again)" : "Turn the 3D view off (unsubscribes every 3D layer: no bandwidth)"
-    return (
-        <button type="button" className={`dim-btn icon icon-button scene-power ${off ? "" : "on"}`} aria-pressed={!off} title={title} aria-label={off ? "Turn the 3D view on" : "Turn the 3D view off"} onClick={() => onChange(!off)}>
-            <Icon name="power" size={15} />
-        </button>
-    )
+    return <IconButton size="sm" icon="power" pressed={!off} label={title} aria-label={off ? "Turn the 3D view on" : "Turn the 3D view off"} onClick={() => onChange(!off)} />
 }
 
 function SceneRate() {
     const total = totalRate(useStore(cloudRates))
     const text = total.clouds ? `${formatCount(total.pointsPerSecond)} pts/s · ${formatBytes(total.bytesPerSecond)}/s` : "no cloud"
-    return <span className="camera-info scene-rate" title={`${total.clouds} point cloud${total.clouds === 1 ? "" : "s"} drawn: points and bytes received a second`}>{text}</span>
+    return <Text mono small muted className="camera-info scene-rate" title={`${total.clouds} point cloud${total.clouds === 1 ? "" : "s"} drawn: points and bytes received a second`}>{text}</Text>
 }
 
-function CloudButton({ app, open, onOpen }: { app: ViewerApp; open: boolean; onOpen: (open: boolean) => void }) {
+/** the point cloud button and its menu (each PointCloud2 on the bus) */
+function CloudButton({ app }: { app: ViewerApp }) {
     const { list } = useStore(app.layers.entries)
     const clouds = list.filter(isCloud)
     const on = clouds.filter((entry) => entry.enabled).length
     return (
-        <button type="button" className="dim-btn icon icon-button scene-clouds" aria-haspopup="menu" aria-expanded={open} title={`Point clouds: ${on} of ${clouds.length} shown`} aria-label="Point clouds" onClick={() => onOpen(!open)}>
-            <Icon name="layers" size={15} />
-            {clouds.length > 0 && <span className="scene-count">{on}/{clouds.length}</span>}
-        </button>
+        <Popover
+            placement="bottom-end"
+            className="cloud-menu"
+            trigger={
+                <Button variant="ghost" size="sm" icon="layers" className="scene-clouds" aria-haspopup="menu" title={`Point clouds: ${on} of ${clouds.length} shown`} aria-label="Point clouds">
+                    {clouds.length > 0 && <Text mono small>{on}/{clouds.length}</Text>}
+                </Button>
+            }
+        >
+            <CloudMenu app={app} />
+        </Popover>
     )
 }
 
-function CloudMenu({ app, anchor, onClose }: { app: ViewerApp; anchor: HTMLElement | null; onClose: () => void }) {
+function CloudMenu({ app }: { app: ViewerApp }) {
     const { list } = useStore(app.layers.entries)
     const rates = useStore(cloudRates)
     useStore(cloudQualities)
     const clouds = list.filter(isCloud)
-    useEffect(() => {
-        const close = (event: Event) => {
-            if (!(event.target as HTMLElement).closest?.(".cloud-menu, .scene-clouds")) {
-                onClose()
-            }
-        }
-        addEventListener("pointerdown", close, true)
-        return () => removeEventListener("pointerdown", close, true)
-    }, [onClose])
-    return createPortal(
-        <div className="dim-panel cloud-menu" role="menu" aria-label="Point clouds" style={menuPosition(anchor)}>
-            <div className="quality-title">Point clouds</div>
-            {!clouds.length && <p className="cloud-empty">No PointCloud2 on the bus yet.</p>}
+    return (
+        <div role="menu" aria-label="Point clouds">
+            <Text as="div" small muted className="dr-label">Point clouds</Text>
+            {!clouds.length && <Text as="p" small muted>No PointCloud2 on the bus yet.</Text>}
             {clouds.map((entry) => <CloudRow key={entry.topic.key} app={app} entry={entry} rate={rates[entry.topic.key]} />)}
-        </div>,
-        document.body,
+        </div>
     )
 }
 
@@ -202,47 +186,27 @@ function CloudRow({ app, entry, rate }: { app: ViewerApp; entry: LayerEntry; rat
     return (
         <div className={`cloud-row ${entry.enabled ? "on" : ""}`} data-key={entry.topic.key}>
             <div className="cloud-line">
-                <Toggle value={entry.enabled} onChange={(enabled) => app.layers.setEnabled(entry.topic.key, enabled)} />
-                <span className="cloud-name" title={entry.topic.key}>{entry.topic.name}</span>
-                <span className="cloud-rate">{entry.enabled && rate ? `${formatCount(rate.pointsPerSecond)} pts/s · ${formatBytes(rate.bytesPerSecond)}/s` : entry.enabled ? "…" : "off"}</span>
+                <Toggle size="sm" value={entry.enabled} onChange={(enabled: boolean) => app.layers.setEnabled(entry.topic.key, enabled)} />
+                <Text small className="cloud-name" title={entry.topic.key}>{entry.topic.name}</Text>
+                <Text mono small muted>{entry.enabled && rate ? `${formatCount(rate.pointsPerSecond)} pts/s · ${formatBytes(rate.bytesPerSecond)}/s` : entry.enabled ? "…" : "off"}</Text>
             </div>
             {entry.enabled && (
                 <div className="cloud-controls">
-                    <div className="cloud-presets" role="radiogroup" aria-label={`${entry.topic.name} bandwidth`} title={preset.about}>
-                        {CLOUD_PRESETS.map((option) => (
-                            <button key={option.id} type="button" role="radio" aria-checked={quality === option.id} className={`cloud-preset ${quality === option.id ? "on" : ""}`} title={option.about} onClick={() => setCloudQuality(entry.topic.key, option.id as CloudQuality)}>
-                                {option.id === "low" ? "Low" : option.label}
-                            </button>
-                        ))}
-                    </div>
-                    <select className="dim-select cloud-color" value={look.colorMode} aria-label={`${entry.topic.name} color by`} onChange={(event) => setLook({ colorMode: event.target.value as PointLook["colorMode"] })}>
-                        {COLOR_MODES.map(([mode, label]) => <option key={mode} value={mode}>{label}</option>)}
-                    </select>
+                    <Segmented
+                        size="sm"
+                        label={`${entry.topic.name} bandwidth`}
+                        title={preset.about}
+                        items={CLOUD_PRESETS.map((option) => ({ value: option.id, label: option.id === "low" ? "Low" : option.label, title: option.about }))}
+                        value={quality}
+                        onChange={(id: CloudQuality) => setCloudQuality(entry.topic.key, id)}
+                    />
+                    <Select size="sm" value={look.colorMode} aria-label={`${entry.topic.name} color by`} options={COLOR_MODES} onChange={(colorMode: PointLook["colorMode"]) => setLook({ colorMode })} />
                     {look.colorMode === "solid"
-                        ? <input type="color" className="cloud-solid" value={look.solid} aria-label={`${entry.topic.name} solid color`} onChange={(event) => setLook({ solid: event.target.value })} />
-                        : (
-                            <select className="dim-select cloud-color" value={look.gradient} aria-label={`${entry.topic.name} colormap`} onChange={(event) => setLook({ gradient: event.target.value })}>
-                                {GRADIENTS.map((gradient) => <option key={gradient} value={gradient}>{gradient}</option>)}
-                            </select>
-                        )}
-                    <label className="cloud-size" title="point size">
-                        <input type="range" className="dim-range" min={0.01} max={0.5} step={0.01} value={look.size} aria-label={`${entry.topic.name} point size`} onChange={(event) => setLook({ size: Number(event.target.value) })} />
-                        <span>{Math.round(look.size * 100)} cm</span>
-                    </label>
+                        ? <ColorSwatch value={look.solid} label={`${entry.topic.name} solid color`} onChange={(solid: string) => setLook({ solid })} />
+                        : <Select size="sm" value={look.gradient} aria-label={`${entry.topic.name} colormap`} options={GRADIENTS} onChange={(gradient: string) => setLook({ gradient })} />}
+                    <Slider className="cloud-size" title="point size" min={0.01} max={0.5} step={0.01} value={look.size} aria-label={`${entry.topic.name} point size`} format={(size: number) => `${Math.round(size * 100)} cm`} onChange={(size: number) => setLook({ size })} />
                 </div>
             )}
         </div>
     )
-}
-
-/** The menu hangs from the panel's top-right corner (its bottom-right, fullscreen), kept inside the window. */
-function menuPosition(panel: HTMLElement | null): React.CSSProperties {
-    const width = 320
-    const box = panel?.getBoundingClientRect()
-    if (!box || box.width >= innerWidth - 4) {
-        return { position: "fixed", right: 60, bottom: 112, width, zIndex: 40 }
-    }
-    const left = Math.max(8, Math.min(box.right - width, innerWidth - width - 8))
-    const top = Math.max(56, Math.min(box.top + HEAD_PX + 4, innerHeight - 320))
-    return { position: "fixed", left, top, width, zIndex: 40 }
 }

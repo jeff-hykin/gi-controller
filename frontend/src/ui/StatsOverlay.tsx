@@ -1,4 +1,5 @@
 // Render numbers, for tuning and for the latency claim: fps, CPU per frame, bridge→screen latency, points drawn.
+import { Card, Text } from "dimos-react"
 import type { ViewerApp } from "../core/app.ts"
 import { useStore } from "../core/store.ts"
 
@@ -11,11 +12,11 @@ export function StatsOverlay({ app }: { app: ViewerApp }) {
     }
     const ms = (value: number | null) => value === null ? "–" : `${value.toFixed(1)} ms`
     return (
-        <div className="dim-panel glass dim-mono stats-overlay" data-testid="stats">
-            <div>{stats.fps} fps · {stats.frameMs.toFixed(2)} ms/frame CPU</div>
-            <div>latency p50 {ms(stats.latencyP50)} · p95 {ms(stats.latencyP95)}</div>
-            <div>arrival→frame {ms(stats.arrivalToFrameMs)} · rtt {ms(connection.rttMs)}</div>
-            <div>{stats.points.toLocaleString()} points · {stats.drawCalls} draws</div>
-        </div>
+        <Card glass className="stats-overlay" data-testid="stats">
+            <Text as="div" mono small>{stats.fps} fps · {stats.frameMs.toFixed(2)} ms/frame CPU</Text>
+            <Text as="div" mono small>latency p50 {ms(stats.latencyP50)} · p95 {ms(stats.latencyP95)}</Text>
+            <Text as="div" mono small>arrival→frame {ms(stats.arrivalToFrameMs)} · rtt {ms(connection.rttMs)}</Text>
+            <Text as="div" mono small>{stats.points.toLocaleString()} points · {stats.drawCalls} draws</Text>
+        </Card>
     )
 }

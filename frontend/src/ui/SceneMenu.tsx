@@ -1,7 +1,8 @@
 // The 3D view's right-click menu: label the clicked spot (a text label at that point in the fixed frame, written into
 // the recording if one runs) or remove the label under the cursor. A right-drag still pans: only a right click that
 // barely moved opens it (a long press on touch). "Go here" publishes clicked_point: it sends the spot to the nav stack (one message).
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
+import { Button, Card, MenuAt, Text, TextInput } from "dimos-react"
 import type * as THREE from "three"
 import type { ViewerApp } from "../core/app.ts"
 import type { LocationLabel } from "../core/labels.ts"
@@ -25,7 +26,6 @@ export function SceneMenu({ app }: { app: ViewerApp }) {
     const [menu, setMenu] = useState<Menu | null>(null)
     const [text, setText] = useState("")
     const [note, setNote] = useState<string | null>(null)
-    const box = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         const canvas = app.viewer.renderer.domElement
@@ -79,20 +79,6 @@ export function SceneMenu({ app }: { app: ViewerApp }) {
     }, [app])
 
     useEffect(() => {
-        if (!menu) {
-            return
-        }
-        const onKey = (event: KeyboardEvent) => event.key === "Escape" && setMenu(null)
-        const onOutside = (event: PointerEvent) => !box.current?.contains(event.target as Node) && setMenu(null)
-        addEventListener("keydown", onKey)
-        addEventListener("pointerdown", onOutside, true)
-        return () => {
-            removeEventListener("keydown", onKey)
-            removeEventListener("pointerdown", onOutside, true)
-        }
-    }, [menu])
-
-    useEffect(() => {
         if (!note) {
             return
         }
@@ -141,20 +127,28 @@ export function SceneMenu({ app }: { app: ViewerApp }) {
         }
     }
 
-    // keep the menu on screen
-    const left = menu ? Math.min(menu.x, innerWidth - 250) : 0
-    const top = menu ? Math.min(menu.y, innerHeight - 175) : 0
     return (
         <>
             {menu && (
-                <div ref={box} className="dim-panel scene-menu" style={{ left, top }} role="menu" onContextMenu={(event) => event.preventDefault()}>
+                <MenuAt
+                    x={menu.x}
+                    y={menu.y}
+                    className="scene-menu"
+                    onClose={() => setMenu(null)}
+                    onContextMenu={(event: React.MouseEvent) => event.preventDefault()}
+                    items={menu.editing ? [] : [
+                        { label: "Go here", disabled: !menu.point, onSelect: () => publishClickedPoint(menu.point!) },
+                        { label: "Label this location…", disabled: !menu.point, keepOpen: true, onSelect: () => setMenu({ ...menu, editing: true }) },
+                        ...(menu.near ? [{ label: `Remove label “${menu.near.label}”`, onSelect: () => remove(menu.near!) }] : []),
+                    ]}
+                >
                     {menu.point && (
-                        <div className="scene-menu-where dim-mono">
+                        <Text as="div" mono small muted className="scene-menu-where">
                             {fmt(menu.point.x)}, {fmt(menu.point.y)}, {fmt(menu.point.z)} · {app.viewer.fixedFrame}
                             {menu.on === "ground" ? " · ground" : ""}
-                        </div>
+                        </Text>
                     )}
-                    {menu.editing ? (
+                    {menu.editing && (
                         <form
                             className="scene-menu-edit"
                             onSubmit={(event) => {
@@ -162,27 +156,13 @@ export function SceneMenu({ app }: { app: ViewerApp }) {
                                 save()
                             }}
                         >
-                            <input className="dim-input" autoFocus placeholder="What happened here?" value={text} onChange={(event) => setText(event.target.value)} />
-                            <button type="submit" className="dim-btn primary" disabled={!text.trim()}>Add</button>
+                            <TextInput autoFocus placeholder="What happened here?" value={text} onChange={setText} />
+                            <Button type="submit" variant="primary" disabled={!text.trim()}>Add</Button>
                         </form>
-                    ) : (
-                        <>
-                            <button type="button" role="menuitem" className="scene-menu-item" disabled={!menu.point} onClick={() => publishClickedPoint(menu.point!)}>
-                                Go here
-                            </button>
-                            <button type="button" role="menuitem" className="scene-menu-item" disabled={!menu.point} onClick={() => setMenu({ ...menu, editing: true })}>
-                                Label this location…
-                            </button>
-                            {menu.near && (
-                                <button type="button" role="menuitem" className="scene-menu-item" onClick={() => remove(menu.near!)}>
-                                    Remove label “{menu.near.label}”
-                                </button>
-                            )}
-                        </>
                     )}
-                </div>
+                </MenuAt>
             )}
-            {note && <div className="dim-panel scene-note">{note}</div>}
+            {note && <Card glass className="scene-note">{note}</Card>}
         </>
     )
 }

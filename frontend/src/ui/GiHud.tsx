@@ -2,11 +2,12 @@
 // (status, step latency, its thought, its two sticks drawn live). Desktop: a bar at the bottom center. Phone: a bar
 // above the thumb sticks. Hold T to talk and G to toggle autodrive on a desktop (ui/useGiKeys.ts).
 import { useEffect, useRef, useState } from "react"
+import { Button, Card, StickIndicator, Text, TextInput } from "dimos-react"
 import type { ViewerApp } from "../core/app.ts"
 import { useStore } from "../core/store.ts"
 import type { AutodriveState } from "../core/gi/autodrive.ts"
 import type { Stick } from "../core/gamepad.ts"
-import { releaseAllSticks } from "./Joystick.tsx"
+import { releaseAllThumbSticks } from "dimos-react"
 
 /** What the status chip says; takeover reads "You're driving" whatever the reason text. */
 export function statusText(state: AutodriveState, takeover: boolean): string {
@@ -33,18 +34,6 @@ export function statusText(state: AutodriveState, takeover: boolean): string {
     }
 }
 
-/** One of GI's sticks: a ring with a dot where the stick is (y up). */
-function StickView({ stick, label }: { stick: Stick | null; label: string }) {
-    const [x, y] = stick ?? [0, 0]
-    return (
-        <svg className="gi-stick" viewBox="-1.2 -1.2 2.4 2.4" role="img" aria-label={`GI ${label} stick ${x.toFixed(2)}, ${y.toFixed(2)}`}>
-            <circle r="1" className="ring" />
-            <line x1="0" y1="0" x2={x} y2={-y} className="arm" />
-            <circle cx={x} cy={-y} r="0.28" className={`dot ${stick && (x || y) ? "live" : ""}`} />
-        </svg>
-    )
-}
-
 export function GiHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
     const { autodrive, speech } = app.gi
     const state = useStore(autodrive.state)
@@ -68,7 +57,7 @@ export function GiHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
             return
         }
         tookControlAt.current = performance.now()
-        releaseAllSticks()
+        releaseAllThumbSticks()
         app.drive.stop()
         autodrive.end("off", "you took control")
     }
@@ -94,53 +83,52 @@ export function GiHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
     // screen, the sticks (ui/DriveHud.tsx) or the prompt and mic
     const auto = state.on
     const ended = state.status === "done" || state.status === "stuck" || state.status === "error"
+    const Shell = mobile ? "div" : Card
     return (
-        <div className={`gi-hud ${mobile ? `mobile ${auto ? "auto" : "manual"}` : "dim-panel glass"} tone-${tone}`} data-testid="gi-hud">
+        <Shell {...(mobile ? {} : { glass: true, padded: false })} className={`gi-hud ${mobile ? `mobile ${auto ? "auto" : "manual"}` : ""} tone-${tone}`} data-testid="gi-hud">
             {mobile && (auto
                 // while GI drives this is also STOP: on touch (as ui/DriveHud.tsx's STOP), it halts everything and hands over
-                ? <button type="button" className="dim-btn gi-mode gi-mode-manual" data-testid="take-control-button" onPointerDown={takeControl} onClick={takeControl}>Take control</button>
-                : <button type="button" className="dim-btn gi-mode gi-mode-auto" data-testid="autodrive-button" onClick={() => performance.now() - tookControlAt.current > 600 && autodrive.start()}><span className="gi-led" aria-hidden="true" />Autodrive</button>)}
+                ? <Button size="lg" block className="gi-mode gi-mode-manual" data-testid="take-control-button" onPointerDown={takeControl} onClick={takeControl}>Take control</Button>
+                : <Button variant="primary" size="lg" block className="gi-mode gi-mode-auto" data-testid="autodrive-button" onClick={() => performance.now() - tookControlAt.current > 600 && autodrive.start()}>Autodrive</Button>)}
             {(!mobile || auto) && <div className="gi-row">
-                {!mobile && <button
-                    type="button"
-                    className={`dim-btn gi-autodrive ${state.on ? "on" : ""}`}
+                {!mobile && <Button
+                    variant={state.on ? "primary" : "default"}
+                    className="gi-autodrive"
                     data-testid="autodrive-button"
-                    aria-pressed={state.on}
-                    title={mobile ? undefined : "Autodrive (G): GI drives from the camera; any key, stick or gamepad takes over"}
+                    pressed={state.on}
+                    title="Autodrive (G): GI drives from the camera; any key, stick or gamepad takes over"
                     onClick={() => autodrive.toggle()}
                 >
-                    <span className="gi-led" aria-hidden="true" />
                     {buttonLabel}
-                </button>}
-                <button
-                    type="button"
-                    className={`dim-btn gi-mic ${talking ? "on" : ""} ${talk.unavailable ? "unavailable" : ""}`}
+                </Button>}
+                <Button
+                    variant={talking ? "danger" : "default"}
+                    className="dr-btn--icon gi-mic"
+                    icon={talk.unavailable ? "mic-off" : "mic"}
                     data-testid="mic-button"
                     aria-disabled={!!talk.unavailable}
-                    aria-pressed={talking}
+                    pressed={talking}
                     aria-label={talk.unavailable ? `Mic unavailable: ${talk.unavailable}` : "Hold to talk"}
                     title={talk.unavailable ? `Mic unavailable: ${talk.unavailable}` : mobile ? undefined : "Hold to talk (or hold T)"}
-                    onPointerDown={(event) => {
+                    onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
                         event.preventDefault()
                         event.currentTarget.setPointerCapture?.(event.pointerId)
                         talkStart()
                     }}
                     onPointerUp={() => speech.stop()}
                     onPointerCancel={() => speech.stop()}
-                    onContextMenu={(event) => event.preventDefault()}
-                >
-                    <MicIcon off={!!talk.unavailable} />
-                </button>
-                <input
-                    className="dim-input gi-instruction"
+                    onContextMenu={(event: React.MouseEvent) => event.preventDefault()}
+                />
+                <TextInput
+                    className="gi-instruction"
                     data-testid="gi-instruction"
                     placeholder={mobile ? "Tell GI what to do" : "Tell GI what to do (Enter starts)"}
                     enterKeyHint="go"
                     value={talking ? talk.interim || "listening…" : draft}
                     readOnly={talking}
-                    onChange={(event) => setDraft(event.target.value)}
+                    onChange={setDraft}
                     onBlur={() => commit(draft, false)}
-                    onKeyDown={(event) => {
+                    onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
                         if (event.key === "Enter") {
                             commit(draft, true)
                             event.currentTarget.blur()
@@ -152,25 +140,17 @@ export function GiHud({ app, mobile }: { app: ViewerApp; mobile: boolean }) {
                 />
             </div>}
             {(!mobile || auto || ended) && <div className="gi-row gi-status-row">
-                <span className={`gi-status`} data-testid="gi-status" role="status">{note ?? talk.error ?? status}</span>
-                {state.on && state.latencyMs !== null && <span className="gi-latency dim" data-testid="gi-latency">{state.latencyMs < 1 ? "<1" : state.latencyMs} ms</span>}
+                <Text mono small className="gi-status" data-testid="gi-status" role="status">{note ?? talk.error ?? status}</Text>
+                {state.on && state.latencyMs !== null && <Text mono small muted data-testid="gi-latency">{state.latencyMs < 1 ? "<1" : state.latencyMs} ms</Text>}
                 <span className="gi-sticks" aria-label="GI's sticks">
-                    <StickView stick={state.on && !takeover ? state.action?.leftStick ?? null : null} label="left" />
-                    <StickView stick={state.on && !takeover ? state.action?.rightStick ?? null : null} label="right" />
+                    <StickIndicator value={stickOf(state.on && !takeover ? state.action?.leftStick ?? null : null)} label="GI left stick" />
+                    <StickIndicator value={stickOf(state.on && !takeover ? state.action?.rightStick ?? null : null)} label="GI right stick" />
                 </span>
             </div>}
-            {state.thought && state.on && !takeover && <div className="gi-thought dim" data-testid="gi-thought">“{state.thought}”</div>}
-        </div>
+            {state.thought && state.on && !takeover && <Text as="div" small muted className="gi-thought" data-testid="gi-thought">“{state.thought}”</Text>}
+        </Shell>
     )
 }
 
-function MicIcon({ off }: { off: boolean }) {
-    return (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="9" y="3" width="6" height="11" rx="3" />
-            <path d="M5 11a7 7 0 0 0 14 0" />
-            <path d="M12 18v3" />
-            {off && <path d="M4 4l16 16" />}
-        </svg>
-    )
-}
+/** GI's stick as StickIndicator's value (null: not driving) */
+const stickOf = (stick: Stick | null) => stick ? { x: stick[0], y: stick[1] } : null

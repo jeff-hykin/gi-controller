@@ -1,10 +1,11 @@
 // First-run messages over the 3D view: what's missing before the Controller can show or drive a robot, and a button to
 // the place that fixes it (the Launcher, filtered to blueprints that take cmd_vel). Live: they follow Desktop's `runs`
 // events (core/runs.ts) and the bridge's state, so the message goes away as soon as a blueprint starts.
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
+import { Badge, Button, EmptyState, Spinner } from "dimos-react"
 import type { ViewerApp } from "../core/app.ts"
 import { useStore } from "../core/store.ts"
-import { emptyState, type EmptyStateOptions } from "../dim-app/source/desktop.js"
+import { type EmptyStateOptions, openApp, underDesktop } from "../dim-app/source/desktop.js"
 import { takesVelocity } from "../core/cmdvel.ts"
 
 const LAUNCH_DRIVABLE = { stream: "cmd_vel" }
@@ -43,16 +44,31 @@ function useSustained(on: boolean, ms: number): boolean {
     return on && sustained
 }
 
-/** desktop.js's emptyState, centered over the view (above Desktop's dock). */
-export function EmptyLayer(props: EmptyStateOptions) {
-    const host = useRef<HTMLDivElement>(null)
-    const key = JSON.stringify({ ...props, actions: props.actions?.map((action) => action.label) })
-    const latest = useRef(props)
-    latest.current = props
-    useEffect(() => {
-        host.current?.replaceChildren(emptyState(latest.current))
-    }, [key])
-    return <div ref={host} className="dim-empty-layer" />
+/** The first-run message, centered over the view (above Desktop's dock); an action opens a Desktop app or runs. */
+export function EmptyLayer({ title, body, label, tone = "info", busy = false, actions = [], testId }: EmptyStateOptions) {
+    return (
+        <EmptyState
+            layer
+            className="empty-layer"
+            data-testid={testId}
+            icon={tone === "warn" ? "warn" : "info"}
+            tone={tone === "warn" ? "warn" : undefined}
+            title={title}
+            message={body as string}
+            actions={actions.filter((action) => !action.app || underDesktop()).map((action, index) => (
+                <Button
+                    key={index}
+                    variant={(action.primary ?? index === 0) ? "primary" : "default"}
+                    data-app={action.app}
+                    onClick={() => (action.app ? openApp(action.app, action.params) : action.onClick?.())}
+                >
+                    {action.label}
+                </Button>
+            ))}
+        >
+            {label && <Badge tone={tone === "warn" ? "warn" : "info"}>{busy && <Spinner size={10} label="" />} {label}</Badge>}
+        </EmptyState>
+    )
 }
 
 export type Onboarding = { message: EmptyStateOptions | null; blocksDriving: boolean }
