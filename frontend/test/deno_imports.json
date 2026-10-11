@@ -1,0 +1,12 @@
+{
+    "imports": {
+        "dimos-react": "https://raw.githubusercontent.com/jeff-hykin/dimos-react/v0.2.0-beta3/src/index.ts",
+        "dimos-react/three": "https://raw.githubusercontent.com/jeff-hykin/dimos-react/v0.2.0-beta3/src/three.ts",
+        "react": "npm:react@19.3.0",
+        "react/": "npm:/react@19.3.0/",
+        "react-dom": "npm:react-dom@19.3.0",
+        "react-dom/": "npm:/react-dom@19.3.0/",
+        "three": "npm:three@0.180.0",
+        "three/": "npm:/three@0.180.0/"
+    }
+}
