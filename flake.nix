@@ -27,6 +27,8 @@
                         version = "0.1.0";
                         src = ./frontend;
                         npmDepsHash = "sha256-HUfYXfoPPMgy6xAlPoxsyCSXQFnmuEINXqIVOw+GxRk=";
+                        # npm writes the git dependency (dimos-react) into its cache while installing
+                        makeCacheWritable = true;
                         installPhase = ''
                             cp -r dist $out
                         '';
