@@ -26,7 +26,7 @@
                         pname = "gi-controller-frontend";
                         version = "0.1.0";
                         src = ./frontend;
-                        npmDepsHash = "sha256-HUfYXfoPPMgy6xAlPoxsyCSXQFnmuEINXqIVOw+GxRk=";
+                        npmDepsHash = "sha256-U3Db4jheIiRNC2oldVC/QAcPGJw2wBPTACtA1sv6nIs=";
                         # npm writes the git dependency (dimos-react) into its cache while installing
                         makeCacheWritable = true;
                         installPhase = ''
