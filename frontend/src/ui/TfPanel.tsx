@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Field, Select, Text, Tree } from "dimos-react"
 import type { ViewerApp } from "../core/app.ts"
 import { useStore } from "../core/store.ts"
-import type { TfSnapshot } from "dimos-react/src/three/tf.js"
+import type { TfSnapshot } from "dimos-react/three"
 
 interface FrameNode {
     id: string

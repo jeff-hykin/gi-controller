@@ -14,9 +14,9 @@ export function TopBar({ app, tab, onTab }: { app: ViewerApp; tab: Tab | null; o
     const live = connection.state === "connected"
     // driving's settings are Settings' first section; recording is the Record button at the top left (RecordControl)
     const tabs = [
-        { value: "tf", icon: "tree", label: "TF", title: "TF", badge: tfIssues.length > 0 ? tfIssues.length : undefined },
-        { value: "layers", icon: "layers", label: "Layers", title: "Layers" },
-        { value: "settings", icon: "settings", label: "Settings", title: "Settings" },
+        { value: "tf" as const, icon: "tree", label: "TF", title: "TF", badge: tfIssues.length > 0 ? tfIssues.length : undefined },
+        { value: "layers" as const, icon: "layers", label: "Layers", title: "Layers" },
+        { value: "settings" as const, icon: "settings", label: "Settings", title: "Settings" },
     ]
     return (
         <Bar

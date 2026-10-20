@@ -90,7 +90,12 @@ export class ViewerApp {
         this.#profile = profileFor(first.type)
         this.robot = new Store({ type: first.type, auto: !chosenType(this.settings.get().profile), reason: first.reason })
         this.connection = new Connection(this.profile.drive.deadmanMs)
-        this.viewer = new Viewer(host, { clock: () => this.connection.bridgeNow() })
+        const viewer = new Viewer(host, { clock: () => this.connection.bridgeNow() })
+        // the render pipeline (splats, cubes, highlights) needs WebGL: without it the 3D view can't start
+        if (!viewer.renderer) {
+            throw new Error(`3D view: ${viewer.webglError ?? "no WebGL"}`)
+        }
+        this.viewer = viewer as Viewer & { renderer: THREE.WebGLRenderer }
         watchSplatBudget(this.viewer)
         this.highlight = new FrameHighlight(this.viewer, this.tf)
         this.video = new VideoSources(this.connection)

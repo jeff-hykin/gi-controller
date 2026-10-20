@@ -2,7 +2,7 @@
 import type * as THREE from "three"
 import type { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js"
 import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
-import type { Store } from "../store.ts"
+import type { Store } from "dimos-react/three" // the viewer's stores are dimos-react's
 
 export interface RenderStats {
     fps: number
