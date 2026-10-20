@@ -6,7 +6,7 @@
         "dev": "vite",
         "build": "tsc --noEmit -p . && vite build",
         "typecheck": "tsc --noEmit -p .",
-        "test": "deno test -A --no-check --no-lock test/"
+        "test": "deno test -A --no-check --no-lock --import-map test/deno_imports.json test/"
     },
     "dependencies": {
         "dimos-react": "https://codeload.github.com/jeff-hykin/dimos-react/tar.gz/refs/tags/v0.2.0-beta15",
